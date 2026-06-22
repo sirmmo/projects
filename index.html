@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Deployed Projects · sirmmo</title>
+<meta name="description" content="A navigable directory of all deployed projects across the sirmmo ecosystems." />
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🛰️&lt;/text&gt;&lt;/svg&gt;" />
+<style>
+  :root {
+    --bg: #0c0e14;
+    --bg-soft: #12151f;
+    --panel: #161a26;
+    --panel-2: #1b2030;
+    --line: #262c3d;
+    --line-soft: #1f2433;
+    --txt: #e7eaf3;
+    --txt-dim: #9aa3b8;
+    --txt-faint: #6b7488;
+    --accent: #6ea8fe;
+    --accent-2: #7c5cff;
+    --ok: #43d39e;
+    --warn: #ffb454;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.7);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(124,92,255,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 0%, rgba(110,168,254,.10), transparent 55%),
+      var(--bg);
+    color: var(--txt);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace; }
+
+  /* ---- header ---- */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: linear-gradient(180deg, rgba(12,14,20,.92), rgba(12,14,20,.72));
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+  .top { display: flex; align-items: center; gap: 18px; padding: 18px 0 14px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand .logo {
+    width: 40px; height: 40px; flex: none; border-radius: 11px;
+    display: grid; place-items: center; font-size: 20px;
+    background: linear-gradient(140deg, var(--accent), var(--accent-2));
+    box-shadow: 0 6px 18px -6px rgba(124,92,255,.7);
+  }
+  .brand h1 { font-size: 17px; margin: 0; letter-spacing: .2px; line-height: 1.1; }
+  .brand p { margin: 2px 0 0; font-size: 12.5px; color: var(--txt-dim); }
+  .grow { flex: 1 1 auto; }
+  .status {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; color: var(--txt-dim);
+    padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--panel); white-space: nowrap;
+  }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--txt-faint); }
+  .status.live .dot { background: var(--ok); box-shadow: 0 0 0 4px rgba(67,211,158,.16); }
+  .status.snap .dot { background: var(--warn); }
+  .ghlink { display:inline-flex; align-items:center; gap:7px; font-size:13px; color:var(--txt-dim);
+    padding:7px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); }
+  .ghlink:hover { color: var(--txt); border-color: var(--accent); }
+
+  /* ---- search ---- */
+  .searchbar { position: relative; padding-bottom: 14px; }
+  .searchbar svg { position: absolute; left: 14px; top: 50%; transform: translateY(calc(-50% - 7px)); color: var(--txt-faint); }
+  #q {
+    width: 100%; font-size: 15px; color: var(--txt);
+    padding: 12px 14px 12px 42px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--bg-soft);
+    outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  #q::placeholder { color: var(--txt-faint); }
+  #q:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(110,168,254,.18); }
+  kbd { font-size: 11px; color: var(--txt-faint); border: 1px solid var(--line); border-bottom-width: 2px;
+    padding: 1px 6px; border-radius: 6px; background: var(--panel); }
+  .searchbar .hint { position:absolute; right:12px; top:11px; }
+
+  /* ---- filter chips ---- */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 0 18px; }
+  .chip {
+    font-size: 12.5px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--panel); color: var(--txt-dim);
+    transition: all .14s; user-select: none; display:inline-flex; align-items:center; gap:7px;
+  }
+  .chip:hover { color: var(--txt); border-color: #38405a; }
+  .chip.on { color: #fff; border-color: transparent; background: linear-gradient(140deg, var(--accent), var(--accent-2)); }
+  .chip .n { font-size: 11px; opacity: .7; }
+  .chip.attn.on { background: linear-gradient(140deg, #ff9a4d, #ff6b6b); }
+
+  /* ---- layout ---- */
+  main { max-width: 1180px; margin: 0 auto; padding: 26px 22px 80px; }
+  .group { margin-bottom: 38px; scroll-margin-top: 150px; }
+  .group h2 {
+    display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px;
+    font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--txt-dim);
+  }
+  .group h2 .bar { flex: 1; height: 1px; background: var(--line-soft); }
+  .group h2 .cnt { color: var(--txt-faint); font-weight: 600; letter-spacing: normal; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+  .card {
+    position: relative; display: flex; flex-direction: column; gap: 12px;
+    padding: 16px 16px 14px; border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    transition: transform .16s ease, border-color .16s, box-shadow .16s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: #3a4366; box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 22px 44px -22px rgba(110,168,254,.45); }
+  .card .head { display: flex; align-items: flex-start; gap: 10px; }
+  .card .domain { font-size: 15px; font-weight: 600; line-height: 1.25; word-break: break-word; }
+  .card .domain .arrow { color: var(--txt-faint); transition: color .15s, transform .15s; display:inline-block; }
+  .card:hover .domain .arrow { color: var(--accent); transform: translate(2px,-2px); }
+  .card .svc { font-size: 12.5px; color: var(--txt-dim); margin-top: 3px; }
+  .attn {
+    flex: none; margin-left: auto; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--ok); box-shadow: 0 0 0 4px rgba(67,211,158,.14); margin-top: 5px;
+  }
+  .attn.nok { background: var(--warn); box-shadow: 0 0 0 4px rgba(255,180,84,.16); }
+
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+  .badge {
+    font-size: 11px; padding: 3px 9px; border-radius: 7px; font-weight: 600; letter-spacing: .02em;
+    border: 1px solid var(--line); color: var(--txt-dim); background: var(--bg-soft);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .badge::before { content:""; width:6px; height:6px; border-radius:2px; background: currentColor; opacity:.8; }
+  .badge.role { border:none; background:transparent; color:var(--txt-faint); padding-left:0; }
+  .badge.role::before { display:none; }
+  .badge.gh    { color:#b69bff; border-color:#3a2f63; }
+  .badge.net   { color:#4fd1c5; border-color:#1f4d49; }
+  .badge.ver   { color:#cfd6e6; border-color:#3a4160; }
+  .badge.srv   { color:#ff9a4d; border-color:#5a3a1f; }
+  .badge.cf    { color:#ffb454; border-color:#5a4720; }
+  .badge.ext   { color:#9aa3b8; border-color:#33394d; }
+  .fwd { font-size: 12px; color: var(--warn); display:flex; align-items:center; gap:6px; }
+
+  .empty { text-align: center; padding: 80px 20px; color: var(--txt-dim); }
+  .empty .big { font-size: 40px; margin-bottom: 8px; }
+
+  footer { max-width: 1180px; margin: 0 auto; padding: 24px 22px 60px; color: var(--txt-faint); font-size: 12.5px;
+    border-top: 1px solid var(--line-soft); }
+  footer a { color: var(--txt-dim); text-decoration: underline; text-underline-offset: 2px; }
+
+  @media (max-width: 560px) {
+    .brand p { display: none; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo">🛰️</div>
+        <div>
+          <h1>Deployed Projects</h1>
+          <p>Live directory across the sirmmo ecosystems</p>
+        </div>
+      </div>
+      <div class="grow"></div>
+      <span id="status" class="status snap"><span class="dot"></span><span id="statusText">loading…</span></span>
+      <a class="ghlink" href="https://github.com/sirmmo/projects" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        Repo
+      </a>
+    </div>
+    <div class="searchbar">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+      <input id="q" type="search" placeholder="Search domain, service, ecosystem, hosting…" autocomplete="off" spellcheck="false" />
+      <span class="hint"><kbd>/</kbd></span>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<footer class="wrap">
+  <span id="footCount"></span> ·
+  Source: <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv" target="_blank" rel="noopener">published Google Sheet</a> ·
+  Showing rows with <span class="mono">status = deployed</span>.
+</footer>
+
+<script>
+/* DATA:START */
+const PROJECTS = [
+  {
+    "domain": "badgecollector.org",
+    "ecosystem": "BadgeCollector",
+    "service": "BadgeCollector",
+    "be": "",
+    "fe": "GH Pages, Cloudflare",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "opengolfmap.org",
+    "ecosystem": "Demo tech",
+    "service": "OpenGolfMap",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openwinemap.org",
+    "ecosystem": "Demo tech",
+    "service": "OHM",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "swpatterns.com",
+    "ecosystem": "Demo tech",
+    "service": "SoftwarePatterns",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "cbrpnk.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "Server",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "lcars.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "Server",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "map.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "Server",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openfantasymap.com",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "Server",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openfantasymap.info",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openfantasymap.net",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openfantasymap.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openfantasymaps.com",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openfantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "pipboy.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "stellarcartography.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "www.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "gaiawm.github.io",
+    "ecosystem": "GaiaWM",
+    "service": "",
+    "be": "",
+    "fe": "",
+    "others": "gh-pages",
+    "forward": "",
+    "attention": "nok"
+  },
+  {
+    "domain": "gestaltbi.github.io",
+    "ecosystem": "GestaltBI",
+    "service": "gestalt-bi",
+    "be": "--",
+    "fe": "--",
+    "others": "gh-pages",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "hugo-tools.github.io",
+    "ecosystem": "Hugo Tools",
+    "service": "",
+    "be": "--",
+    "fe": "--",
+    "others": "gh-pages",
+    "forward": "",
+    "attention": "nok"
+  },
+  {
+    "domain": "justplaybo.it",
+    "ecosystem": "Justplay",
+    "service": "Justplay Home",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "sherlock.justplaybo.it",
+    "ecosystem": "Justplay",
+    "service": "Sherlock Holmes Consulting Detective",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "infoboard.xyz",
+    "ecosystem": "OntoRAG",
+    "service": "newsroom",
+    "be": "Server",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "mcp.rpg-schema.org",
+    "ecosystem": "OntoRAG",
+    "service": "ontorag mcp",
+    "be": "Vercel",
+    "fe": "--",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "mcp.tcg-schema.org",
+    "ecosystem": "OntoRAG",
+    "service": "ontorag mcp",
+    "be": "Vercel",
+    "fe": "--",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "archaeo.pro",
+    "ecosystem": "OpenHistoryMap",
+    "service": "Archaeo Pro",
+    "be": "Vercel",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "blog.openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "",
+    "be": "--",
+    "fe": "--",
+    "others": "Medium, Substack",
+    "forward": "",
+    "attention": "nok"
+  },
+  {
+    "domain": "games.ofancientrome.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "games.ofancientrome.org",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "games.ofthepast.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "nok"
+  },
+  {
+    "domain": "geocontext.info",
+    "ecosystem": "OpenHistoryMap",
+    "service": "geocontext",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "ideas.ofancientrome.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "ideas.ofancientrome.org",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "index.openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OHM",
+    "be": "Server",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "map.ofww1.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "map.ofww1.org",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "map.ofww2.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "map.ofww2.org",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "map.openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OHM",
+    "be": "Server",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "ohm.openhistoryline.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "ohl",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openculturemap.com",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OpenCultureMap",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OHM",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "rulers.ofancientrome.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "rulers.ofancientrome.org",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "rulers.ofthepast.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "rulers.ofthepast.org",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "www.openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OHM",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "rpg-schema.org",
+    "ecosystem": "RPG-schema",
+    "service": "OntoRAG",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "forge.cardsapi.com",
+    "ecosystem": "TCG-schema",
+    "service": "cardsapi forge",
+    "be": "Vercel",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "tcg-schema.org",
+    "ecosystem": "TCG-schema",
+    "service": "OntoRAG",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "nerderie.com",
+    "ecosystem": "",
+    "service": "",
+    "be": "--",
+    "fe": "--",
+    "others": "Medium",
+    "forward": "",
+    "attention": "nok"
+  },
+  {
+    "domain": "nerderie.net",
+    "ecosystem": "",
+    "service": "",
+    "be": "--",
+    "fe": "--",
+    "others": "Medium",
+    "forward": "",
+    "attention": "nok"
+  },
+  {
+    "domain": "nerderie.org",
+    "ecosystem": "",
+    "service": "",
+    "be": "--",
+    "fe": "--",
+    "others": "Medium",
+    "forward": "",
+    "attention": "nok"
+  }
+];
+/* DATA:END */
+
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv";
+
+let DATA = PROJECTS.slice();
+const state = { q: "", eco: null, attn: false };
+
+/* ---- tiny RFC-4180-ish CSV parser ---- */
+function parseCSV(text) {
+  const rows = []; let row = [], field = "", i = 0, inQ = false;
+  text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  while (i < text.length) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i+1] === '"') { field += '"'; i++; } else inQ = false; }
+      else field += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ",") { row.push(field); field = ""; }
+      else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+      else field += c;
+    }
+    i++;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function csvToProjects(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) return [];
+  const head = rows[0].map(h => h.trim());
+  const idx = name => head.indexOf(name);
+  const c = { dom: idx("dominio"), eco: idx("ecosystem"), svc: idx("servizio"),
+    be: idx("BE hosting"), fe: idx("FE hosting"), oth: idx("others"),
+    st: idx("status"), fwd: idx("forward to"), att: idx("attention") };
+  const g = (r, k) => (k >= 0 && r[k] != null ? r[k].trim() : "");
+  const out = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (g(row, c.st).toLowerCase() !== "deployed") continue;
+    out.push({ domain: g(row, c.dom), ecosystem: g(row, c.eco), service: g(row, c.svc),
+      be: g(row, c.be), fe: g(row, c.fe), others: g(row, c.oth),
+      forward: g(row, c.fwd), attention: g(row, c.att) });
+  }
+  out.sort((a, b) => (a.ecosystem.toLowerCase() || "zzz").localeCompare(b.ecosystem.toLowerCase() || "zzz") || a.domain.toLowerCase().localeCompare(b.domain.toLowerCase()));
+  return out;
+}
+
+/* ---- hosting badge classification ---- */
+function hostClass(token) {
+  const t = token.toLowerCase();
+  if (t.includes("gh") || t.includes("pages") || t.includes("github")) return "gh";
+  if (t.includes("netlify")) return "net";
+  if (t.includes("vercel")) return "ver";
+  if (t.includes("server")) return "srv";
+  if (t.includes("cloudflare")) return "cf";
+  return "ext";
+}
+function hostTokens(v) {
+  return (v || "").split(/[,/]/).map(s => s.trim()).filter(s => s && s !== "--");
+}
+
+const ECO_LABEL = e => e || "Other";
+const ESC = s => (s || "").replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+
+function matches(p) {
+  if (state.attn && p.attention.toLowerCase() !== "nok") return false;
+  if (state.eco !== null && (p.ecosystem || "") !== state.eco) return false;
+  if (state.q) {
+    const hay = [p.domain, p.service, p.ecosystem, p.be, p.fe, p.others, p.forward].join(" ").toLowerCase();
+    if (!state.q.split(/\s+/).every(t => hay.includes(t))) return false;
+  }
+  return true;
+}
+
+function renderChips() {
+  const counts = {};
+  DATA.forEach(p => { const k = p.ecosystem || ""; counts[k] = (counts[k] || 0) + 1; });
+  const ecos = Object.keys(counts).sort((a, b) => (a.toLowerCase() || "zzz").localeCompare(b.toLowerCase() || "zzz"));
+  const nok = DATA.filter(p => p.attention.toLowerCase() === "nok").length;
+  const el = document.getElementById("chips");
+  let html = `<div class="chip ${state.eco === null && !state.attn ? "on" : ""}" data-eco="__all">All <span class="n">${DATA.length}</span></div>`;
+  ecos.forEach(e => {
+    html += `<div class="chip ${state.eco === e ? "on" : ""}" data-eco="${ESC(e)}">${ESC(ECO_LABEL(e))} <span class="n">${counts[e]}</span></div>`;
+  });
+  if (nok) html += `<div class="chip attn ${state.attn ? "on" : ""}" data-attn="1">⚠ Needs attention <span class="n">${nok}</span></div>`;
+  el.innerHTML = html;
+  el.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+    if (ch.dataset.attn) { state.attn = !state.attn; }
+    else if (ch.dataset.eco === "__all") { state.eco = null; state.attn = false; }
+    else { state.eco = state.eco === ch.dataset.eco ? null : ch.dataset.eco; }
+    render();
+  }));
+}
+
+function cardHTML(p) {
+  const url = "https://" + p.domain;
+  const svc = p.service && p.service !== p.domain ? `<div class="svc">${ESC(p.service)}</div>` : "";
+  const nok = p.attention.toLowerCase() === "nok";
+  const badges = [];
+  hostTokens(p.fe).forEach(t => badges.push(`<span class="badge ${hostClass(t)}">${ESC(t)}</span>`));
+  hostTokens(p.be).forEach(t => badges.push(`<span class="badge ${hostClass(t)}">${ESC(t)} ·be</span>`));
+  hostTokens(p.others).forEach(t => badges.push(`<span class="badge ext">${ESC(t)}</span>`));
+  if (!badges.length) badges.push(`<span class="badge ext">live</span>`);
+  const fwd = p.forward ? `<div class="fwd">→ forwards to <span class="mono">${ESC(p.forward)}</span></div>` : "";
+  return `<a class="card" href="${ESC(url)}" target="_blank" rel="noopener" title="${ESC(url)}">
+    <div class="head">
+      <div>
+        <div class="domain mono">${ESC(p.domain)} <span class="arrow">↗</span></div>
+        ${svc}
+      </div>
+      <span class="attn ${nok ? "nok" : ""}" title="${nok ? "Needs attention" : "OK"}"></span>
+    </div>
+    ${fwd}
+    <div class="badges">${badges.join("")}</div>
+  </a>`;
+}
+
+function render() {
+  renderChips();
+  const list = DATA.filter(matches);
+  const main = document.getElementById("main");
+  if (!list.length) {
+    main.innerHTML = `<div class="empty"><div class="big">🔍</div>No projects match your filters.</div>`;
+  } else {
+    const groups = {};
+    list.forEach(p => { const k = p.ecosystem || ""; (groups[k] = groups[k] || []).push(p); });
+    const keys = Object.keys(groups).sort((a, b) => (a.toLowerCase() || "zzz").localeCompare(b.toLowerCase() || "zzz"));
+    main.innerHTML = keys.map(k => `
+      <section class="group">
+        <h2>${ESC(ECO_LABEL(k))} <span class="cnt">${groups[k].length}</span><span class="bar"></span></h2>
+        <div class="grid">${groups[k].map(cardHTML).join("")}</div>
+      </section>`).join("");
+  }
+  document.getElementById("footCount").textContent =
+    `${list.length} of ${DATA.length} deployed project${DATA.length === 1 ? "" : "s"}`;
+}
+
+function setStatus(kind, text) {
+  const el = document.getElementById("status");
+  el.className = "status " + kind;
+  document.getElementById("statusText").textContent = text;
+}
+
+/* initial paint from embedded snapshot */
+setStatus("snap", "snapshot");
+render();
+
+/* live refresh from the sheet */
+fetch(CSV_URL, { cache: "no-store" })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(text => {
+    const live = csvToProjects(text);
+    if (live.length) { DATA = live; render(); setStatus("live", "live · synced with sheet"); }
+    else setStatus("snap", "snapshot");
+  })
+  .catch(() => setStatus("snap", "snapshot (offline)"));
+
+/* keyboard: "/" focuses search, Esc clears */
+const q = document.getElementById("q");
+q.addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); render(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== q) { e.preventDefault(); q.focus(); }
+  if (e.key === "Escape" && document.activeElement === q) { q.value = ""; state.q = ""; render(); q.blur(); }
+});
+</script>
+</body>
+</html>

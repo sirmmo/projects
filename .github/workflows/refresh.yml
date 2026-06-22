@@ -1,0 +1,32 @@
+name: Refresh snapshot
+
+# Re-fetch the published sheet daily and commit the updated embedded snapshot.
+on:
+  schedule:
+    - cron: "17 5 * * *"   # daily at 05:17 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Rebuild snapshot from the live sheet
+        run: python3 build.py
+      - name: Commit if changed
+        run: |
+          if [[ -n "$(git status --porcelain index.html)" ]]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "chore: refresh deployed-projects snapshot"
+            git push
+          else
+            echo "No changes."
+          fi
