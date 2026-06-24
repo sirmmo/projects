@@ -7,6 +7,9 @@ generated from a published Google Sheet.
 
 ## What it shows
 
+**Featured** projects (`featured = yes`) are showcased in a gold rail at the top
+of the landing view, carry a ★ marker on their card, and have their own filter.
+
 Each card is a deployed domain, grouped by ecosystem, with:
 
 - the live domain (click to open),

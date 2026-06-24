@@ -98,6 +98,7 @@
   .chip.on { color: #fff; border-color: transparent; background: linear-gradient(140deg, var(--accent), var(--accent-2)); }
   .chip .n { font-size: 11px; opacity: .7; }
   .chip.attn.on { background: linear-gradient(140deg, #ff9a4d, #ff6b6b); }
+  .chip.star.on { background: linear-gradient(140deg, #ffd86b, #ff9a4d); color: #1a1205; }
 
   /* ---- layout ---- */
   main { max-width: 1180px; margin: 0 auto; padding: 26px 22px 80px; }
@@ -119,6 +120,13 @@
     transition: transform .16s ease, border-color .16s, box-shadow .16s;
   }
   .card:hover { transform: translateY(-3px); border-color: #3a4366; box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 22px 44px -22px rgba(110,168,254,.45); }
+  .card.featured { border-color: rgba(255,200,90,.42);
+    background: linear-gradient(180deg, #1c1d20, #1a1813);
+    box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 34px -20px rgba(255,196,84,.55); }
+  .card.featured:hover { border-color: rgba(255,200,90,.75); box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 22px 46px -22px rgba(255,196,84,.6); }
+  .star { color: #ffcf5a; }
+  .group.feat h2 { color: #ffcf5a; }
+  .group.feat .bar { background: linear-gradient(90deg, rgba(255,196,84,.45), transparent); }
   .card .head { display: flex; align-items: flex-start; gap: 10px; }
   .card .domain { font-size: 15px; font-weight: 600; line-height: 1.25; word-break: break-word; }
   a.domain::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius); }
@@ -245,7 +253,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "swpatterns.com",
@@ -255,7 +264,8 @@ const PROJECTS = [
     "fe": "Netlify",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "cbrpnk.fantasymaps.org",
@@ -265,7 +275,8 @@ const PROJECTS = [
     "fe": "Server",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "lcars.fantasymaps.org",
@@ -275,7 +286,8 @@ const PROJECTS = [
     "fe": "Server",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "map.fantasymaps.org",
@@ -285,7 +297,8 @@ const PROJECTS = [
     "fe": "Netlify",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": "yes"
   },
   {
     "domain": "pipboy.fantasymaps.org",
@@ -295,7 +308,8 @@ const PROJECTS = [
     "fe": "Netlify",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "stellarcartography.org",
@@ -305,7 +319,8 @@ const PROJECTS = [
     "fe": "Netlify",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": "yes"
   },
   {
     "domain": "www.fantasymaps.org",
@@ -315,7 +330,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "gaiawm.github.io",
@@ -325,7 +341,8 @@ const PROJECTS = [
     "fe": "",
     "others": "gh-pages",
     "forward": "",
-    "attention": "nok"
+    "attention": "nok",
+    "featured": ""
   },
   {
     "domain": "www.fantasymaps.org/geobard",
@@ -335,7 +352,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "geocontext.info",
@@ -345,7 +363,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": "yes"
   },
   {
     "domain": "gestaltbi.github.io",
@@ -355,7 +374,8 @@ const PROJECTS = [
     "fe": "--",
     "others": "gh-pages",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "hugo-tools.github.io",
@@ -365,7 +385,8 @@ const PROJECTS = [
     "fe": "--",
     "others": "gh-pages",
     "forward": "",
-    "attention": "nok"
+    "attention": "nok",
+    "featured": ""
   },
   {
     "domain": "justplaybo.it",
@@ -375,7 +396,8 @@ const PROJECTS = [
     "fe": "Netlify",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "launcher.justplaybo.it",
@@ -385,7 +407,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "sherlock.justplaybo.it",
@@ -395,7 +418,8 @@ const PROJECTS = [
     "fe": "Netlify",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "mcp.rpg-schema.org",
@@ -405,7 +429,8 @@ const PROJECTS = [
     "fe": "--",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "mcp.tcg-schema.org",
@@ -415,7 +440,8 @@ const PROJECTS = [
     "fe": "--",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "archaeo.pro",
@@ -425,7 +451,8 @@ const PROJECTS = [
     "fe": "Netlify",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": "yes"
   },
   {
     "domain": "blog.openhistorymap.org",
@@ -435,7 +462,8 @@ const PROJECTS = [
     "fe": "--",
     "others": "Medium, Substack",
     "forward": "",
-    "attention": "nok"
+    "attention": "nok",
+    "featured": ""
   },
   {
     "domain": "games.ofancientrome.org",
@@ -445,7 +473,8 @@ const PROJECTS = [
     "fe": "",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "games.ofthepast.org",
@@ -455,7 +484,8 @@ const PROJECTS = [
     "fe": "",
     "others": "",
     "forward": "",
-    "attention": "nok"
+    "attention": "nok",
+    "featured": ""
   },
   {
     "domain": "ideas.ofancientrome.org",
@@ -465,7 +495,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "index.openhistorymap.org",
@@ -475,7 +506,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "map.ofww1.org",
@@ -485,7 +517,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "map.ofww2.org",
@@ -495,7 +528,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "map.openhistorymap.org",
@@ -505,7 +539,8 @@ const PROJECTS = [
     "fe": "Netlify",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "ohm.openhistoryline.org",
@@ -515,7 +550,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "openculturemap.com",
@@ -525,7 +561,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "rulers.ofancientrome.org",
@@ -535,7 +572,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "rulers.ofthepast.org",
@@ -545,7 +583,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "timeline.ofww1.org",
@@ -555,7 +594,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "timeline.ofww2.org",
@@ -565,7 +605,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "www.openhistorymap.org",
@@ -575,7 +616,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": "yes"
   },
   {
     "domain": "rpg-schema.org",
@@ -585,7 +627,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "sirmmo.itch.io",
@@ -595,7 +638,8 @@ const PROJECTS = [
     "fe": "",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "forge.cardsapi.com",
@@ -605,7 +649,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "tcg-schema.org",
@@ -615,7 +660,8 @@ const PROJECTS = [
     "fe": "GH Pages",
     "others": "",
     "forward": "",
-    "attention": "ok"
+    "attention": "ok",
+    "featured": ""
   },
   {
     "domain": "nerderie.org",
@@ -625,7 +671,8 @@ const PROJECTS = [
     "fe": "--",
     "others": "Medium",
     "forward": "",
-    "attention": "nok"
+    "attention": "nok",
+    "featured": ""
   }
 ];
 const SERVICES = [
@@ -652,7 +699,7 @@ const SERVICES = [
     "type": "SPA, Backend, Blog",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "https://github.com/FantasyMaps",
     "description": ""
   },
@@ -1058,7 +1105,8 @@ const SERVICES = [
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv";
 const CATALOG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv";
 
-const state = { q: "", eco: null, attn: false, type: null };
+const state = { q: "", eco: null, attn: false, type: null, featured: false };
+const isFeat = p => (p.featured || "").toLowerCase() === "yes";
 
 /* ---- join the deployed list with the services catalog ---- */
 const norm = s => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -1112,7 +1160,7 @@ function csvToProjects(text) {
   const idx = name => head.indexOf(name);
   const c = { dom: idx("dominio"), eco: idx("ecosystem"), svc: idx("servizio"),
     be: idx("BE hosting"), fe: idx("FE hosting"), oth: idx("others"),
-    st: idx("status"), fwd: idx("forward to"), att: idx("attention") };
+    st: idx("status"), fwd: idx("forward to"), att: idx("attention"), fea: idx("featured") };
   const g = (r, k) => (k >= 0 && r[k] != null ? r[k].trim() : "");
   const out = [];
   for (let r = 1; r < rows.length; r++) {
@@ -1120,7 +1168,7 @@ function csvToProjects(text) {
     if (g(row, c.st).toLowerCase() !== "deployed") continue;
     out.push({ domain: g(row, c.dom), ecosystem: g(row, c.eco), service: g(row, c.svc),
       be: g(row, c.be), fe: g(row, c.fe), others: g(row, c.oth),
-      forward: g(row, c.fwd), attention: g(row, c.att) });
+      forward: g(row, c.fwd), attention: g(row, c.att), featured: g(row, c.fea) });
   }
   out.sort((a, b) => (a.ecosystem.toLowerCase() || "zzz").localeCompare(b.ecosystem.toLowerCase() || "zzz") || a.domain.toLowerCase().localeCompare(b.domain.toLowerCase()));
   return out;
@@ -1162,6 +1210,7 @@ const ECO_LABEL = e => e || "Other";
 const ESC = s => (s || "").replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 
 function matches(p) {
+  if (state.featured && !isFeat(p)) return false;
   if (state.attn && p.attention.toLowerCase() !== "nok") return false;
   if (state.eco !== null && (p.ecosystem || "") !== state.eco) return false;
   if (state.type !== null && !p.types.some(t => t.toLowerCase() === state.type.toLowerCase())) return false;
@@ -1180,16 +1229,20 @@ function renderChips() {
   DATA.forEach(p => { const k = p.ecosystem || ""; counts[k] = (counts[k] || 0) + 1; });
   const ecos = Object.keys(counts).sort((a, b) => (a.toLowerCase() || "zzz").localeCompare(b.toLowerCase() || "zzz"));
   const nok = DATA.filter(p => p.attention.toLowerCase() === "nok").length;
+  const feat = DATA.filter(isFeat).length;
   const el = document.getElementById("chips");
-  let html = `<div class="chip ${state.eco === null && !state.attn ? "on" : ""}" data-eco="__all">All <span class="n">${DATA.length}</span></div>`;
+  const allOn = state.eco === null && !state.attn && !state.featured;
+  let html = `<div class="chip ${allOn ? "on" : ""}" data-eco="__all">All <span class="n">${DATA.length}</span></div>`;
+  if (feat) html += `<div class="chip star ${state.featured ? "on" : ""}" data-feat="1">★ Featured <span class="n">${feat}</span></div>`;
   ecos.forEach(e => {
     html += `<div class="chip ${state.eco === e ? "on" : ""}" data-eco="${ESC(e)}">${ESC(ECO_LABEL(e))} <span class="n">${counts[e]}</span></div>`;
   });
   if (nok) html += `<div class="chip attn ${state.attn ? "on" : ""}" data-attn="1">⚠ Needs attention <span class="n">${nok}</span></div>`;
   el.innerHTML = html;
   el.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
-    if (ch.dataset.attn) { state.attn = !state.attn; }
-    else if (ch.dataset.eco === "__all") { state.eco = null; state.attn = false; }
+    if (ch.dataset.feat) { state.featured = !state.featured; }
+    else if (ch.dataset.attn) { state.attn = !state.attn; }
+    else if (ch.dataset.eco === "__all") { state.eco = null; state.attn = false; state.featured = false; }
     else { state.eco = state.eco === ch.dataset.eco ? null : ch.dataset.eco; }
     render();
   }));
@@ -1218,6 +1271,8 @@ const repoLabel = u => u.replace(/^https?:\/\/(www\.)?github\.com\//i, "").repla
 
 function cardHTML(p) {
   const url = "https://" + p.domain;
+  const fea = isFeat(p);
+  const star = fea ? `<span class="star" title="Featured">★</span> ` : "";
   const svcName = p.service && p.service !== p.domain ? ESC(p.service) : "";
   const subTxt = p.subtypes.length ? p.subtypes.map(ESC).join(", ") : "";
   let svcInner = "";
@@ -1238,10 +1293,10 @@ function cardHTML(p) {
   const uses = p.uses.length ? `<div class="uses"><b>uses</b> ${p.uses.map(ESC).join(", ")}</div>` : "";
   const repos = p.repos.length
     ? `<div class="cardfoot">${p.repos.map(r => `<a class="repo" href="${ESC(r)}" target="_blank" rel="noopener" title="${ESC(r)}">${GH_SVG}${ESC(repoLabel(r))}</a>`).join("")}</div>` : "";
-  return `<div class="card">
+  return `<div class="card${fea ? " featured" : ""}">
     <div class="head">
       <div>
-        <a class="domain mono" href="${ESC(url)}" target="_blank" rel="noopener" title="${ESC(url)}">${ESC(p.domain)} <span class="arrow">↗</span></a>
+        <a class="domain mono" href="${ESC(url)}" target="_blank" rel="noopener" title="${ESC(url)}">${star}${ESC(p.domain)} <span class="arrow">↗</span></a>
         ${svc}
       </div>
       <span class="attn ${nok ? "nok" : ""}" title="${nok ? "Needs attention" : "OK"}"></span>
@@ -1255,6 +1310,13 @@ function cardHTML(p) {
   </div>`;
 }
 
+function sectionHTML(title, items, cls) {
+  return `<section class="group${cls ? " " + cls : ""}">
+    <h2>${title} <span class="cnt">${items.length}</span><span class="bar"></span></h2>
+    <div class="grid">${items.map(cardHTML).join("")}</div>
+  </section>`;
+}
+
 function render() {
   renderChips();
   const list = DATA.filter(matches);
@@ -1262,14 +1324,16 @@ function render() {
   if (!list.length) {
     main.innerHTML = `<div class="empty"><div class="big">🔍</div>No projects match your filters.</div>`;
   } else {
+    let out = "";
+    // Showcase featured projects at the top of the unfiltered landing view.
+    const pureDefault = !state.q && state.eco === null && state.type === null && !state.attn && !state.featured;
+    const feat = list.filter(isFeat);
+    if (pureDefault && feat.length) out += sectionHTML(`<span class="star">★</span> Featured`, feat, "feat");
     const groups = {};
     list.forEach(p => { const k = p.ecosystem || ""; (groups[k] = groups[k] || []).push(p); });
     const keys = Object.keys(groups).sort((a, b) => (a.toLowerCase() || "zzz").localeCompare(b.toLowerCase() || "zzz"));
-    main.innerHTML = keys.map(k => `
-      <section class="group">
-        <h2>${ESC(ECO_LABEL(k))} <span class="cnt">${groups[k].length}</span><span class="bar"></span></h2>
-        <div class="grid">${groups[k].map(cardHTML).join("")}</div>
-      </section>`).join("");
+    out += keys.map(k => sectionHTML(ESC(ECO_LABEL(k)), groups[k], "")).join("");
+    main.innerHTML = out;
   }
   document.getElementById("footCount").textContent =
     `${list.length} of ${DATA.length} deployed project${DATA.length === 1 ? "" : "s"}`;

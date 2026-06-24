@@ -54,6 +54,7 @@ def clean_projects(rows):
             "others": g("others"),
             "forward": g("forward to"),
             "attention": g("attention"),
+            "featured": g("featured"),
         })
     out.sort(key=lambda x: (x["ecosystem"].lower() or "zzz", x["domain"].lower()))
     return out
