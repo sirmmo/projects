@@ -10,9 +10,10 @@ generated from a published Google Sheet.
 **Featured** projects (`featured = yes`) are showcased in a gold rail at the top
 of the landing view, carry a ★ marker on their card, and have their own filter.
 
-Each card is a deployed domain, grouped by ecosystem, with:
+Each card is a deployed project, grouped by ecosystem, with:
 
-- the live domain (click to open),
+- its **name** as the headline (falls back to the domain), with the live
+  domain/URL shown underneath when it differs,
 - the service it runs (+ subtype: `gh page`, `itch.io`, `npm`, `docker`),
 - **service type** badges — SPA, Backend, Blog, Library, Manual, Webfront,
 - a description and a link to the **source repo**,

@@ -39,13 +39,25 @@ def load_csv(url, local=None):
     return list(csv.DictReader(io.StringIO(text)))
 
 
+def name_key(rows):
+    """The display-name column has a blank header (exported as 'Column 1');
+    prefer a real 'name' header if the sheet ever gets one."""
+    keys = list(rows[0].keys()) if rows else []
+    for k in keys:
+        if (k or "").strip().lower() == "name":
+            return k
+    return "Column 1" if "Column 1" in keys else None
+
+
 def clean_projects(rows):
+    nk = name_key(rows)
     out = []
     for r in rows:
         g = lambda k: (r.get(k) or "").strip()
         if g("status").lower() != "deployed":
             continue
         out.append({
+            "name": g(nk) if nk else "",
             "domain": g("dominio"),
             "ecosystem": g("ecosystem"),
             "service": g("servizio"),
