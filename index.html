@@ -121,6 +121,7 @@
   .card:hover { transform: translateY(-3px); border-color: #3a4366; box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 22px 44px -22px rgba(110,168,254,.45); }
   .card .head { display: flex; align-items: flex-start; gap: 10px; }
   .card .domain { font-size: 15px; font-weight: 600; line-height: 1.25; word-break: break-word; }
+  a.domain::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius); }
   .card .domain .arrow { color: var(--txt-faint); transition: color .15s, transform .15s; display:inline-block; }
   .card:hover .domain .arrow { color: var(--accent); transform: translate(2px,-2px); }
   .card .svc { font-size: 12.5px; color: var(--txt-dim); margin-top: 3px; }
@@ -130,7 +131,7 @@
   }
   .attn.nok { background: var(--warn); box-shadow: 0 0 0 4px rgba(255,180,84,.16); }
 
-  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
   .badge {
     font-size: 11px; padding: 3px 9px; border-radius: 7px; font-weight: 600; letter-spacing: .02em;
     border: 1px solid var(--line); color: var(--txt-dim); background: var(--bg-soft);
@@ -146,6 +147,42 @@
   .badge.cf    { color:#ffb454; border-color:#5a4720; }
   .badge.ext   { color:#9aa3b8; border-color:#33394d; }
   .fwd { font-size: 12px; color: var(--warn); display:flex; align-items:center; gap:6px; }
+
+  /* description + service kind */
+  .card .desc { font-size: 12.5px; line-height: 1.45; color: var(--txt-dim);
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .types { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tbadge {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; border: 1px solid transparent;
+  }
+  .tbadge.t-spa     { color:#9cc4ff; background:rgba(110,168,254,.12); border-color:rgba(110,168,254,.35); }
+  .tbadge.t-backend { color:#c3acff; background:rgba(124,92,255,.12); border-color:rgba(124,92,255,.35); }
+  .tbadge.t-blog    { color:#ff9ec4; background:rgba(255,107,164,.12); border-color:rgba(255,107,164,.35); }
+  .tbadge.t-library { color:#5fe3b6; background:rgba(67,211,158,.12); border-color:rgba(67,211,158,.35); }
+  .tbadge.t-manual  { color:#ffc879; background:rgba(255,180,84,.13); border-color:rgba(255,180,84,.38); }
+  .tbadge.t-webfront{ color:#7fe0d6; background:rgba(79,209,197,.12); border-color:rgba(79,209,197,.35); }
+  .tbadge.t-other   { color:var(--txt-dim); background:var(--bg-soft); border-color:var(--line); }
+  .sub { font-size: 11px; color: var(--txt-faint); display:inline-flex; align-items:center; gap:4px; }
+  .sub::before { content:"·"; }
+  .sub.solo::before { content:none; }
+
+  .cardfoot { display:flex; flex-wrap:wrap; gap:8px; margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+  a.repo {
+    position: relative; z-index: 2; display:inline-flex; align-items:center; gap:6px;
+    font-size: 11.5px; color: var(--txt-dim); padding: 3px 9px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--bg-soft);
+  }
+  a.repo:hover { color: var(--txt); border-color: var(--accent); }
+  a.repo svg { flex: none; }
+  .uses { font-size: 11px; color: var(--txt-faint); }
+  .uses b { color: var(--txt-dim); font-weight: 600; }
+
+  /* type filter row */
+  .filterrow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .chips.types { padding-top: 0; }
+  .flabel { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--txt-faint); margin-right: 2px; }
+  .chip.kind.on { background: linear-gradient(140deg, #5fd0ff, #7c5cff); }
 
   .empty { text-align: center; padding: 80px 20px; color: var(--txt-dim); }
   .empty .big { font-size: 40px; margin-bottom: 8px; }
@@ -180,10 +217,11 @@
     </div>
     <div class="searchbar">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-      <input id="q" type="search" placeholder="Search domain, service, ecosystem, hosting…" autocomplete="off" spellcheck="false" />
+      <input id="q" type="search" placeholder="Search domain, service, type, repo, description…" autocomplete="off" spellcheck="false" />
       <span class="hint"><kbd>/</kbd></span>
     </div>
     <div class="chips" id="chips"></div>
+    <div class="chips types" id="typeChips"></div>
   </div>
 </header>
 
@@ -191,8 +229,9 @@
 
 <footer class="wrap">
   <span id="footCount"></span> ·
-  Source: <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv" target="_blank" rel="noopener">published Google Sheet</a> ·
-  Showing rows with <span class="mono">status = deployed</span>.
+  Sources: <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv" target="_blank" rel="noopener">deployed domains</a> +
+  <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv" target="_blank" rel="noopener">services catalog</a>,
+  joined by service name · rows with <span class="mono">status = deployed</span>.
 </footer>
 
 <script>
@@ -289,9 +328,29 @@ const PROJECTS = [
     "attention": "nok"
   },
   {
+    "domain": "www.fantasymaps.org/geobard",
+    "ecosystem": "GaiaWM",
+    "service": "geobard",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
+    "domain": "geocontext.info",
+    "ecosystem": "GeoContext",
+    "service": "geocontext",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
     "domain": "gestaltbi.github.io",
     "ecosystem": "GestaltBI",
-    "service": "gestalt-bi",
+    "service": "Gestalt BI",
     "be": "--",
     "fe": "--",
     "others": "gh-pages",
@@ -399,16 +458,6 @@ const PROJECTS = [
     "attention": "nok"
   },
   {
-    "domain": "geocontext.info",
-    "ecosystem": "OpenHistoryMap",
-    "service": "geocontext",
-    "be": "",
-    "fe": "GH Pages",
-    "others": "",
-    "forward": "",
-    "attention": "ok"
-  },
-  {
     "domain": "ideas.ofancientrome.org",
     "ecosystem": "OpenHistoryMap",
     "service": "ideas.ofancientrome.org",
@@ -509,6 +558,16 @@ const PROJECTS = [
     "attention": "ok"
   },
   {
+    "domain": "timeline.ofww2.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "ohl",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok"
+  },
+  {
     "domain": "www.openhistorymap.org",
     "ecosystem": "OpenHistoryMap",
     "service": "OHM",
@@ -569,12 +628,461 @@ const PROJECTS = [
     "attention": "nok"
   }
 ];
+const SERVICES = [
+  {
+    "name": "Archaeo Pro",
+    "type": "SPA",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openhistorymap/archaeo-pro",
+    "description": "Archaeo Pro - servizi per archeologi"
+  },
+  {
+    "name": "3D Model Commons",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OFM",
+    "type": "SPA, Backend, Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/FantasyMaps",
+    "description": ""
+  },
+  {
+    "name": "OHM",
+    "type": "SPA, Backend, Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openhistorymap",
+    "description": ""
+  },
+  {
+    "name": "holodocker",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/HoloDocker",
+    "description": ""
+  },
+  {
+    "name": "OntoRAG",
+    "type": "SPA, Backend, Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/ontorag",
+    "description": ""
+  },
+  {
+    "name": "Gestalt BI",
+    "type": "SPA",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/GestaltBI",
+    "description": ""
+  },
+  {
+    "name": "diryofanllm",
+    "type": "Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "diaryofelimkors",
+    "type": "Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "wifi share",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/WiFiShare",
+    "description": "servzio di raccolta e share di reti wifi disponibili e pubbliche"
+  },
+  {
+    "name": "gitsign",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/sirmmo/gitsign.com",
+    "description": "dimmi che repo hai starrato e ti dirò chi sei"
+  },
+  {
+    "name": "newsroom",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Agents of the Multiverse",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OFM FleetCommand",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "BarCodeClash",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/BarCodeClash",
+    "description": ""
+  },
+  {
+    "name": "SoftwarePatterns",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "geocontext",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "OHM",
+    "repo": "https://github.com/openhistorymap/geocontext-front",
+    "description": ""
+  },
+  {
+    "name": "BadgeCollector",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Justplay Home",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Sherlock Holmes Consulting Detective",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OpenGolfMap",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/sirmmo/opengolfmap",
+    "description": ""
+  },
+  {
+    "name": "GaiaWM",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "GeoMQTT, geobard, inspector",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "GeoMQTT",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OpenCultureMap",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openhistorymap/openculturmap",
+    "description": ""
+  },
+  {
+    "name": "OpenArtMap",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "maplibre-grid",
+    "type": "Library",
+    "subtype": "npm",
+    "package": "@openfantasymap/maplibre-grid",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "rulers.ofthepast.org",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "rulers.ofancientrome.org",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "rulers.ofancientegypt.org",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "ideas.ofancientrome.org",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "cardsapi forge",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openfantasymap/cardsapi.designer",
+    "description": ""
+  },
+  {
+    "name": "ministry of data",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Vespri",
+    "type": "Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/vespri-1282",
+    "uses": "OHM",
+    "repo": "https://github.com/sirmmo/palermo_1282",
+    "description": ""
+  },
+  {
+    "name": "Genova",
+    "type": "Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/genova-1507",
+    "uses": "OHM",
+    "repo": "https://github.com/sirmmo/genova-1507",
+    "description": ""
+  },
+  {
+    "name": "Poseidonia",
+    "type": "Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/la-corona-di-poseidonia",
+    "uses": "OHM",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Foafp",
+    "type": "Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/figures-of-a-future-past",
+    "uses": "OFM",
+    "repo": "https://github.com/sirmmo/figures_of_a_future_past",
+    "description": ""
+  },
+  {
+    "name": "ECB-LAD",
+    "type": "Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/ecb-ludic-anomaly-division",
+    "uses": "",
+    "repo": "https://github.com/sirmmo/ecb-ludic-anomaly-division",
+    "description": ""
+  },
+  {
+    "name": "map.ofww2.org",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "map.ofww1.org",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "games.ofancientrome.org",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "jusplay games launcher",
+    "repo": "https://github.com/openhistorymap/games.ofancientrome.org",
+    "description": ""
+  },
+  {
+    "name": "jusplay games launcher",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "cardsapi forge",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "games.ofthepast.org",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "jusplay games launcher",
+    "repo": "https://github.com/openhistorymap/games.ofthepast.org",
+    "description": ""
+  },
+  {
+    "name": "ontorag mcp",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "ohl",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "timel.in",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "timel.in",
+    "type": "Library",
+    "subtype": "npm",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "geobard",
+    "type": "Library",
+    "subtype": "docker",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openfantasymap/geobard",
+    "description": ""
+  },
+  {
+    "name": "inspector",
+    "type": "Library",
+    "subtype": "docker",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openfantasymap/inspector",
+    "description": ""
+  }
+];
 /* DATA:END */
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv";
+const CATALOG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv";
 
-let DATA = PROJECTS.slice();
-const state = { q: "", eco: null, attn: false };
+const state = { q: "", eco: null, attn: false, type: null };
+
+/* ---- join the deployed list with the services catalog ---- */
+const norm = s => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const splitList = v => (v || "").split(",").map(s => s.trim()).filter(s => s && s !== "--");
+const uniq = a => [...new Set(a)];
+
+function enrich(projects, services) {
+  const idx = {};
+  (services || []).forEach(s => { if (s.name) idx[norm(s.name)] = s; });
+  return projects.map(p => {
+    let svcs = splitList(p.service).map(n => idx[norm(n)]).filter(Boolean);
+    if (!svcs.length && idx[norm(p.domain)]) svcs = [idx[norm(p.domain)]];
+    return Object.assign({}, p, {
+      types: uniq(svcs.flatMap(s => splitList(s.type))),
+      subtypes: uniq(svcs.flatMap(s => splitList(s.subtype))),
+      repos: uniq(svcs.map(s => s.repo).filter(Boolean)),
+      uses: uniq(svcs.flatMap(s => splitList(s.uses))),
+      packages: uniq(svcs.map(s => s.package).filter(Boolean)),
+      description: (svcs.map(s => s.description).find(Boolean)) || "",
+    });
+  });
+}
+
+let DATA = enrich(PROJECTS, typeof SERVICES !== "undefined" ? SERVICES : []);
 
 /* ---- tiny RFC-4180-ish CSV parser ---- */
 function parseCSV(text) {
@@ -618,6 +1126,24 @@ function csvToProjects(text) {
   return out;
 }
 
+function csvToServices(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) return [];
+  const head = rows[0].map(h => h.trim());
+  const idx = name => head.indexOf(name);
+  const c = { name: idx("Servizio"), type: idx("type"), sub: idx("subtype"),
+    pkg: idx("package"), uses: idx("uses"), repo: idx("Repo"), desc: idx("Descrizione") };
+  const g = (r, k) => (k >= 0 && r[k] != null ? r[k].trim() : "");
+  const out = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!g(row, c.name)) continue;
+    out.push({ name: g(row, c.name), type: g(row, c.type), subtype: g(row, c.sub),
+      package: g(row, c.pkg), uses: g(row, c.uses), repo: g(row, c.repo), description: g(row, c.desc) });
+  }
+  return out;
+}
+
 /* ---- hosting badge classification ---- */
 function hostClass(token) {
   const t = token.toLowerCase();
@@ -638,14 +1164,18 @@ const ESC = s => (s || "").replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;",
 function matches(p) {
   if (state.attn && p.attention.toLowerCase() !== "nok") return false;
   if (state.eco !== null && (p.ecosystem || "") !== state.eco) return false;
+  if (state.type !== null && !p.types.some(t => t.toLowerCase() === state.type.toLowerCase())) return false;
   if (state.q) {
-    const hay = [p.domain, p.service, p.ecosystem, p.be, p.fe, p.others, p.forward].join(" ").toLowerCase();
+    const hay = [p.domain, p.service, p.ecosystem, p.be, p.fe, p.others, p.forward,
+      p.description, p.types.join(" "), p.subtypes.join(" "), p.uses.join(" "),
+      p.packages.join(" "), p.repos.join(" ")].join(" ").toLowerCase();
     if (!state.q.split(/\s+/).every(t => hay.includes(t))) return false;
   }
   return true;
 }
 
 function renderChips() {
+  // ----- ecosystem + attention row -----
   const counts = {};
   DATA.forEach(p => { const k = p.ecosystem || ""; counts[k] = (counts[k] || 0) + 1; });
   const ecos = Object.keys(counts).sort((a, b) => (a.toLowerCase() || "zzz").localeCompare(b.toLowerCase() || "zzz"));
@@ -663,29 +1193,66 @@ function renderChips() {
     else { state.eco = state.eco === ch.dataset.eco ? null : ch.dataset.eco; }
     render();
   }));
+
+  // ----- service-type row (from the catalog sheet) -----
+  const tCounts = {};
+  DATA.forEach(p => p.types.forEach(t => { tCounts[t] = (tCounts[t] || 0) + 1; }));
+  const types = Object.keys(tCounts).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  const tEl = document.getElementById("typeChips");
+  if (!types.length) { tEl.innerHTML = ""; return; }
+  let t = `<span class="flabel">Type</span>`;
+  types.forEach(ty => {
+    const on = state.type !== null && state.type.toLowerCase() === ty.toLowerCase();
+    t += `<div class="chip kind ${on ? "on" : ""}" data-type="${ESC(ty)}">${ESC(ty)} <span class="n">${tCounts[ty]}</span></div>`;
+  });
+  tEl.innerHTML = t;
+  tEl.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+    state.type = state.type === ch.dataset.type ? null : ch.dataset.type;
+    render();
+  }));
 }
+
+const GH_SVG = `<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>`;
+const TYPE_CLASS = t => "t-" + (["spa", "backend", "blog", "library", "manual", "webfront"].includes(t.toLowerCase()) ? t.toLowerCase() : "other");
+const repoLabel = u => u.replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/\/$/, "") || u;
 
 function cardHTML(p) {
   const url = "https://" + p.domain;
-  const svc = p.service && p.service !== p.domain ? `<div class="svc">${ESC(p.service)}</div>` : "";
+  const svcName = p.service && p.service !== p.domain ? ESC(p.service) : "";
+  const subTxt = p.subtypes.length ? p.subtypes.map(ESC).join(", ") : "";
+  let svcInner = "";
+  if (svcName && subTxt) svcInner = `${svcName} <span class="sub">${subTxt}</span>`;
+  else if (svcName) svcInner = svcName;
+  else if (subTxt) svcInner = `<span class="sub solo">${subTxt}</span>`;
+  const svc = svcInner ? `<div class="svc">${svcInner}</div>` : "";
   const nok = p.attention.toLowerCase() === "nok";
+  const types = p.types.length
+    ? `<div class="types">${p.types.map(t => `<span class="tbadge ${TYPE_CLASS(t)}">${ESC(t)}</span>`).join("")}</div>` : "";
+  const desc = p.description ? `<div class="desc">${ESC(p.description)}</div>` : "";
   const badges = [];
   hostTokens(p.fe).forEach(t => badges.push(`<span class="badge ${hostClass(t)}">${ESC(t)}</span>`));
   hostTokens(p.be).forEach(t => badges.push(`<span class="badge ${hostClass(t)}">${ESC(t)} ·be</span>`));
   hostTokens(p.others).forEach(t => badges.push(`<span class="badge ext">${ESC(t)}</span>`));
   if (!badges.length) badges.push(`<span class="badge ext">live</span>`);
   const fwd = p.forward ? `<div class="fwd">→ forwards to <span class="mono">${ESC(p.forward)}</span></div>` : "";
-  return `<a class="card" href="${ESC(url)}" target="_blank" rel="noopener" title="${ESC(url)}">
+  const uses = p.uses.length ? `<div class="uses"><b>uses</b> ${p.uses.map(ESC).join(", ")}</div>` : "";
+  const repos = p.repos.length
+    ? `<div class="cardfoot">${p.repos.map(r => `<a class="repo" href="${ESC(r)}" target="_blank" rel="noopener" title="${ESC(r)}">${GH_SVG}${ESC(repoLabel(r))}</a>`).join("")}</div>` : "";
+  return `<div class="card">
     <div class="head">
       <div>
-        <div class="domain mono">${ESC(p.domain)} <span class="arrow">↗</span></div>
+        <a class="domain mono" href="${ESC(url)}" target="_blank" rel="noopener" title="${ESC(url)}">${ESC(p.domain)} <span class="arrow">↗</span></a>
         ${svc}
       </div>
       <span class="attn ${nok ? "nok" : ""}" title="${nok ? "Needs attention" : "OK"}"></span>
     </div>
+    ${types}
+    ${desc}
     ${fwd}
     <div class="badges">${badges.join("")}</div>
-  </a>`;
+    ${uses}
+    ${repos}
+  </div>`;
 }
 
 function render() {
@@ -718,15 +1285,18 @@ function setStatus(kind, text) {
 setStatus("snap", "snapshot");
 render();
 
-/* live refresh from the sheet */
-fetch(CSV_URL, { cache: "no-store" })
-  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
-  .then(text => {
-    const live = csvToProjects(text);
-    if (live.length) { DATA = live; render(); setStatus("live", "live · synced with sheet"); }
-    else setStatus("snap", "snapshot");
-  })
-  .catch(() => setStatus("snap", "snapshot (offline)"));
+/* live refresh: fetch both tabs and join them in the browser */
+Promise.all([
+  fetch(CSV_URL, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }),
+  fetch(CATALOG_URL, { cache: "no-store" }).then(r => r.ok ? r.text() : "").catch(() => ""),
+]).then(([pText, sText]) => {
+  const live = csvToProjects(pText);
+  if (!live.length) { setStatus("snap", "snapshot"); return; }
+  const services = sText ? csvToServices(sText) : (typeof SERVICES !== "undefined" ? SERVICES : []);
+  DATA = enrich(live, services);
+  render();
+  setStatus("live", "live · synced with sheet");
+}).catch(() => setStatus("snap", "snapshot (offline)"));
 
 /* keyboard: "/" focuses search, Esc clears */
 const q = document.getElementById("q");
