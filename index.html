@@ -6,101 +6,9 @@
 <title>Deployed Projects · sirmmo</title>
 <meta name="description" content="A navigable directory of all deployed projects across the sirmmo ecosystems." />
 <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🛰️&lt;/text&gt;&lt;/svg&gt;" />
+<link rel="stylesheet" href="shell.css" />
 <style>
-  :root {
-    --bg: #0c0e14;
-    --bg-soft: #12151f;
-    --panel: #161a26;
-    --panel-2: #1b2030;
-    --line: #262c3d;
-    --line-soft: #1f2433;
-    --txt: #e7eaf3;
-    --txt-dim: #9aa3b8;
-    --txt-faint: #6b7488;
-    --accent: #6ea8fe;
-    --accent-2: #7c5cff;
-    --ok: #43d39e;
-    --warn: #ffb454;
-    --radius: 14px;
-    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.7);
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
-    background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(124,92,255,.10), transparent 60%),
-      radial-gradient(900px 500px at -10% 0%, rgba(110,168,254,.10), transparent 55%),
-      var(--bg);
-    color: var(--txt);
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-  }
-  a { color: inherit; text-decoration: none; }
-  .mono { font-family: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace; }
-
-  /* ---- header ---- */
-  header {
-    position: sticky; top: 0; z-index: 50;
-    backdrop-filter: blur(14px);
-    background: linear-gradient(180deg, rgba(12,14,20,.92), rgba(12,14,20,.72));
-    border-bottom: 1px solid var(--line-soft);
-  }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
-  .top { display: flex; align-items: center; gap: 18px; padding: 18px 0 14px; flex-wrap: wrap; }
-  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-  .brand .logo {
-    width: 40px; height: 40px; flex: none; border-radius: 11px;
-    display: grid; place-items: center; font-size: 20px;
-    background: linear-gradient(140deg, var(--accent), var(--accent-2));
-    box-shadow: 0 6px 18px -6px rgba(124,92,255,.7);
-  }
-  .brand h1 { font-size: 17px; margin: 0; letter-spacing: .2px; line-height: 1.1; }
-  .brand p { margin: 2px 0 0; font-size: 12.5px; color: var(--txt-dim); }
-  .grow { flex: 1 1 auto; }
-  .status {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 12px; color: var(--txt-dim);
-    padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px;
-    background: var(--panel); white-space: nowrap;
-  }
-  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--txt-faint); }
-  .status.live .dot { background: var(--ok); box-shadow: 0 0 0 4px rgba(67,211,158,.16); }
-  .status.snap .dot { background: var(--warn); }
-  .ghlink { display:inline-flex; align-items:center; gap:7px; font-size:13px; color:var(--txt-dim);
-    padding:7px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); }
-  .ghlink:hover { color: var(--txt); border-color: var(--accent); }
-
-  /* ---- search ---- */
-  .searchbar { position: relative; padding-bottom: 14px; }
-  .searchbar svg { position: absolute; left: 14px; top: 50%; transform: translateY(calc(-50% - 7px)); color: var(--txt-faint); }
-  #q {
-    width: 100%; font-size: 15px; color: var(--txt);
-    padding: 12px 14px 12px 42px; border-radius: 12px;
-    border: 1px solid var(--line); background: var(--bg-soft);
-    outline: none; transition: border-color .15s, box-shadow .15s;
-  }
-  #q::placeholder { color: var(--txt-faint); }
-  #q:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(110,168,254,.18); }
-  kbd { font-size: 11px; color: var(--txt-faint); border: 1px solid var(--line); border-bottom-width: 2px;
-    padding: 1px 6px; border-radius: 6px; background: var(--panel); }
-  .searchbar .hint { position:absolute; right:12px; top:11px; }
-
-  /* ---- filter chips ---- */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 0 18px; }
-  .chip {
-    font-size: 12.5px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
-    border: 1px solid var(--line); background: var(--panel); color: var(--txt-dim);
-    transition: all .14s; user-select: none; display:inline-flex; align-items:center; gap:7px;
-  }
-  .chip:hover { color: var(--txt); border-color: #38405a; }
-  .chip.on { color: #fff; border-color: transparent; background: linear-gradient(140deg, var(--accent), var(--accent-2)); }
-  .chip .n { font-size: 11px; opacity: .7; }
-  .chip.attn.on { background: linear-gradient(140deg, #ff9a4d, #ff6b6b); }
-  .chip.star.on { background: linear-gradient(140deg, #ffd86b, #ff9a4d); color: #1a1205; }
-
-  /* ---- layout ---- */
+  /* ---- list-view layout ---- */
   main { max-width: 1180px; margin: 0 auto; padding: 26px 22px 80px; }
   .group { margin-bottom: 38px; scroll-margin-top: 150px; }
   .group h2 {
@@ -124,7 +32,6 @@
     background: linear-gradient(180deg, #1c1d20, #1a1813);
     box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 34px -20px rgba(255,196,84,.55); }
   .card.featured:hover { border-color: rgba(255,200,90,.75); box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 22px 46px -22px rgba(255,196,84,.6); }
-  .star { color: #ffcf5a; }
   .group.feat h2 { color: #ffcf5a; }
   .group.feat .bar { background: linear-gradient(90deg, rgba(255,196,84,.45), transparent); }
   .card .head { display: flex; align-items: flex-start; gap: 10px; }
@@ -134,74 +41,20 @@
   .card:hover .domain .arrow { color: var(--accent); transform: translate(2px,-2px); }
   .card .addr { font-size: 11.5px; color: var(--txt-faint); margin-top: 3px; word-break: break-all; line-height: 1.3; }
   .card .svc { font-size: 12.5px; color: var(--txt-dim); margin-top: 3px; }
-  .attn {
-    flex: none; margin-left: auto; width: 9px; height: 9px; border-radius: 50%;
-    background: var(--ok); box-shadow: 0 0 0 4px rgba(67,211,158,.14); margin-top: 5px;
-  }
-  .attn.nok { background: var(--warn); box-shadow: 0 0 0 4px rgba(255,180,84,.16); }
-
-  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
-  .badge {
-    font-size: 11px; padding: 3px 9px; border-radius: 7px; font-weight: 600; letter-spacing: .02em;
-    border: 1px solid var(--line); color: var(--txt-dim); background: var(--bg-soft);
-    display: inline-flex; align-items: center; gap: 5px;
-  }
-  .badge::before { content:""; width:6px; height:6px; border-radius:2px; background: currentColor; opacity:.8; }
-  .badge.role { border:none; background:transparent; color:var(--txt-faint); padding-left:0; }
-  .badge.role::before { display:none; }
-  .badge.gh    { color:#b69bff; border-color:#3a2f63; }
-  .badge.net   { color:#4fd1c5; border-color:#1f4d49; }
-  .badge.ver   { color:#cfd6e6; border-color:#3a4160; }
-  .badge.srv   { color:#ff9a4d; border-color:#5a3a1f; }
-  .badge.cf    { color:#ffb454; border-color:#5a4720; }
-  .badge.ext   { color:#9aa3b8; border-color:#33394d; }
   .fwd { font-size: 12px; color: var(--warn); display:flex; align-items:center; gap:6px; }
 
-  /* description + service kind */
   .card .desc { font-size: 12.5px; line-height: 1.45; color: var(--txt-dim);
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .types { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tbadge {
-    font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-    padding: 2px 8px; border-radius: 999px; border: 1px solid transparent;
-  }
-  .tbadge.t-spa     { color:#9cc4ff; background:rgba(110,168,254,.12); border-color:rgba(110,168,254,.35); }
-  .tbadge.t-backend { color:#c3acff; background:rgba(124,92,255,.12); border-color:rgba(124,92,255,.35); }
-  .tbadge.t-blog    { color:#ff9ec4; background:rgba(255,107,164,.12); border-color:rgba(255,107,164,.35); }
-  .tbadge.t-library { color:#5fe3b6; background:rgba(67,211,158,.12); border-color:rgba(67,211,158,.35); }
-  .tbadge.t-manual  { color:#ffc879; background:rgba(255,180,84,.13); border-color:rgba(255,180,84,.38); }
-  .tbadge.t-webfront{ color:#7fe0d6; background:rgba(79,209,197,.12); border-color:rgba(79,209,197,.35); }
-  .tbadge.t-other   { color:var(--txt-dim); background:var(--bg-soft); border-color:var(--line); }
-  .sub { font-size: 11px; color: var(--txt-faint); display:inline-flex; align-items:center; gap:4px; }
-  .sub::before { content:"·"; }
-  .sub.solo::before { content:none; }
 
   .cardfoot { display:flex; flex-wrap:wrap; gap:8px; margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
-  a.repo {
-    position: relative; z-index: 2; display:inline-flex; align-items:center; gap:6px;
-    font-size: 11.5px; color: var(--txt-dim); padding: 3px 9px; border-radius: 7px;
-    border: 1px solid var(--line); background: var(--bg-soft);
-  }
-  a.repo:hover { color: var(--txt); border-color: var(--accent); }
-  a.repo svg { flex: none; }
   .uses { font-size: 11px; color: var(--txt-faint); }
   .uses b { color: var(--txt-dim); font-weight: 600; }
-
-  /* type filter row */
   .filterrow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-  .chips.types { padding-top: 0; }
-  .flabel { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--txt-faint); margin-right: 2px; }
-  .chip.kind.on { background: linear-gradient(140deg, #5fd0ff, #7c5cff); }
 
   .empty { text-align: center; padding: 80px 20px; color: var(--txt-dim); }
   .empty .big { font-size: 40px; margin-bottom: 8px; }
 
-  footer { max-width: 1180px; margin: 0 auto; padding: 24px 22px 60px; color: var(--txt-faint); font-size: 12.5px;
-    border-top: 1px solid var(--line-soft); }
-  footer a { color: var(--txt-dim); text-decoration: underline; text-underline-offset: 2px; }
-
   @media (max-width: 560px) {
-    .brand p { display: none; }
     .grid { grid-template-columns: 1fr; }
   }
 </style>
@@ -218,6 +71,16 @@
         </div>
       </div>
       <div class="grow"></div>
+      <nav class="views">
+        <a class="on" href="./" aria-current="page">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="6" height="5" rx="1.4"/><rect x="9" y="2" width="6" height="5" rx="1.4"/><rect x="1" y="9" width="6" height="5" rx="1.4"/><rect x="9" y="9" width="6" height="5" rx="1.4"/></svg>
+          List
+        </a>
+        <a href="graph.html">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.6 5.9 11 3.4M4.7 8.3l6.1 3.6M13 5.5v4.6"/><circle cx="3" cy="7.4" r="2.1" fill="currentColor" stroke="none"/><circle cx="12.6" cy="3" r="1.7" fill="currentColor" stroke="none"/><circle cx="12.6" cy="12.6" r="1.7" fill="currentColor" stroke="none"/></svg>
+          Graph
+        </a>
+      </nav>
       <span id="status" class="status snap"><span class="dot"></span><span id="statusText">loading…</span></span>
       <a class="ghlink" href="https://github.com/sirmmo/projects" target="_blank" rel="noopener">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
@@ -243,6 +106,7 @@
   joined by service name · rows with <span class="mono">status = deployed</span>.
 </footer>
 
+<script src="sheet.js"></script>
 <script>
 /* DATA:START */
 const PROJECTS = [
@@ -252,6 +116,30 @@ const PROJECTS = [
     "ecosystem": "BadgeCollector",
     "service": "BadgeCollector",
     "be": "Cloudflare",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://www.cityopensource.com",
+    "ecosystem": "cityopensource",
+    "service": "cityopensource",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://ingmmo.com/needle-openai",
+    "ecosystem": "Demo tech",
+    "service": "needle-openai wrapper",
+    "be": "",
     "fe": "GH Pages",
     "others": "",
     "forward": "",
@@ -272,11 +160,35 @@ const PROJECTS = [
   },
   {
     "name": "",
+    "domain": "https://www.hoponmobility.com",
+    "ecosystem": "e-dway",
+    "service": "hoponmobility",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
     "domain": "cbrpnk.fantasymaps.org",
     "ecosystem": "FantasyMaps",
     "service": "OFM",
     "be": "",
     "fe": "Server",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://github.com/openfantasymap/ticker",
+    "ecosystem": "FantasyMaps",
+    "service": "odw ticker",
+    "be": "",
+    "fe": "",
     "others": "",
     "forward": "",
     "attention": "ok",
@@ -443,7 +355,7 @@ const PROJECTS = [
     "domain": "geocontext.info/geocontext-front",
     "ecosystem": "GeoContext",
     "service": "geocontext",
-    "be": "",
+    "be": "--",
     "fe": "GH Pages",
     "others": "",
     "forward": "",
@@ -455,7 +367,7 @@ const PROJECTS = [
     "domain": "geocontext.info/geocontext-storybook",
     "ecosystem": "GeoContext",
     "service": "geocontext storybook",
-    "be": "",
+    "be": "--",
     "fe": "GH Pages",
     "others": "",
     "forward": "",
@@ -744,18 +656,6 @@ const PROJECTS = [
     "ecosystem": "OpenHistoryMap",
     "service": "OpenCultureMap",
     "be": "--",
-    "fe": "GH Pages",
-    "others": "",
-    "forward": "",
-    "attention": "ok",
-    "featured": ""
-  },
-  {
-    "name": "",
-    "domain": "rulers.ofancientegypt.org",
-    "ecosystem": "OpenHistoryMap",
-    "service": "rulers.ofancientegypt.org",
-    "be": "",
     "fe": "GH Pages",
     "others": "",
     "forward": "",
@@ -1477,118 +1377,86 @@ const SERVICES = [
     "uses": "OHM",
     "repo": "https://github.com/ohm-geocontext/geocontext-front",
     "description": ""
+  },
+  {
+    "name": "cities of distant worlds",
+    "type": "SPA, Backend",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "odw ticker",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "wars of distant worlds",
+    "type": "SPA, Backend",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "odw ticker",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "inns of distant worlds",
+    "type": "SPA, Backend",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "odw ticker",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "tansports of distant worlds",
+    "type": "SPA, Backend",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "odw ticker",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "odw ticker",
+    "type": "Docker",
+    "subtype": "docker",
+    "package": "ghcr.io/openfantasymap/ticker",
+    "uses": "",
+    "repo": "https://github.com/openfantasymap/ticker",
+    "description": ""
+  },
+  {
+    "name": "needle-openai wrapper",
+    "type": "Docker",
+    "subtype": "pypy, docker",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "hoponmobility",
+    "type": "SPA, Backend, Webfront, Docker",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "cityopensource",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
   }
 ];
 /* DATA:END */
 
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv";
-const CATALOG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv";
-
 const state = { q: "", eco: null, attn: false, type: null, featured: false };
-const isFeat = p => (p.featured || "").toLowerCase() === "yes";
-
-/* ---- join the deployed list with the services catalog ---- */
-const norm = s => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-const splitList = v => (v || "").split(",").map(s => s.trim()).filter(s => s && s !== "--");
-const uniq = a => [...new Set(a)];
-
-function enrich(projects, services) {
-  const idx = {};
-  (services || []).forEach(s => { if (s.name) idx[norm(s.name)] = s; });
-  return projects.map(p => {
-    let svcs = splitList(p.service).map(n => idx[norm(n)]).filter(Boolean);
-    if (!svcs.length && idx[norm(p.domain)]) svcs = [idx[norm(p.domain)]];
-    return Object.assign({}, p, {
-      types: uniq(svcs.flatMap(s => splitList(s.type))),
-      subtypes: uniq(svcs.flatMap(s => splitList(s.subtype))),
-      repos: uniq(svcs.map(s => s.repo).filter(Boolean)),
-      uses: uniq(svcs.flatMap(s => splitList(s.uses))),
-      packages: uniq(svcs.map(s => s.package).filter(Boolean)),
-      description: (svcs.map(s => s.description).find(Boolean)) || "",
-    });
-  });
-}
-
 let DATA = enrich(PROJECTS, typeof SERVICES !== "undefined" ? SERVICES : []);
-
-/* ---- tiny RFC-4180-ish CSV parser ---- */
-function parseCSV(text) {
-  const rows = []; let row = [], field = "", i = 0, inQ = false;
-  text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  while (i < text.length) {
-    const c = text[i];
-    if (inQ) {
-      if (c === '"') { if (text[i+1] === '"') { field += '"'; i++; } else inQ = false; }
-      else field += c;
-    } else {
-      if (c === '"') inQ = true;
-      else if (c === ",") { row.push(field); field = ""; }
-      else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
-      else field += c;
-    }
-    i++;
-  }
-  if (field.length || row.length) { row.push(field); rows.push(row); }
-  return rows;
-}
-
-function csvToProjects(text) {
-  const rows = parseCSV(text);
-  if (!rows.length) return [];
-  const head = rows[0].map(h => h.trim());
-  const idx = name => head.indexOf(name);
-  let nameIdx = head.findIndex(h => h.toLowerCase() === "name");
-  if (nameIdx < 0) nameIdx = idx("Column 1");
-  const c = { name: nameIdx, dom: idx("dominio"), eco: idx("ecosystem"), svc: idx("servizio"),
-    be: idx("BE hosting"), fe: idx("FE hosting"), oth: idx("others"),
-    st: idx("status"), fwd: idx("forward to"), att: idx("attention"), fea: idx("featured") };
-  const g = (r, k) => (k >= 0 && r[k] != null ? r[k].trim() : "");
-  const out = [];
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r];
-    if (g(row, c.st).toLowerCase() !== "deployed") continue;
-    out.push({ name: g(row, c.name), domain: g(row, c.dom), ecosystem: g(row, c.eco), service: g(row, c.svc),
-      be: g(row, c.be), fe: g(row, c.fe), others: g(row, c.oth),
-      forward: g(row, c.fwd), attention: g(row, c.att), featured: g(row, c.fea) });
-  }
-  out.sort((a, b) => (a.ecosystem.toLowerCase() || "zzz").localeCompare(b.ecosystem.toLowerCase() || "zzz") || a.domain.toLowerCase().localeCompare(b.domain.toLowerCase()));
-  return out;
-}
-
-function csvToServices(text) {
-  const rows = parseCSV(text);
-  if (!rows.length) return [];
-  const head = rows[0].map(h => h.trim());
-  const idx = name => head.indexOf(name);
-  const c = { name: idx("Servizio"), type: idx("type"), sub: idx("subtype"),
-    pkg: idx("package"), uses: idx("uses"), repo: idx("Repo"), desc: idx("Descrizione") };
-  const g = (r, k) => (k >= 0 && r[k] != null ? r[k].trim() : "");
-  const out = [];
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r];
-    if (!g(row, c.name)) continue;
-    out.push({ name: g(row, c.name), type: g(row, c.type), subtype: g(row, c.sub),
-      package: g(row, c.pkg), uses: g(row, c.uses), repo: g(row, c.repo), description: g(row, c.desc) });
-  }
-  return out;
-}
-
-/* ---- hosting badge classification ---- */
-function hostClass(token) {
-  const t = token.toLowerCase();
-  if (t.includes("gh") || t.includes("pages") || t.includes("github")) return "gh";
-  if (t.includes("netlify")) return "net";
-  if (t.includes("vercel")) return "ver";
-  if (t.includes("server")) return "srv";
-  if (t.includes("cloudflare")) return "cf";
-  return "ext";
-}
-function hostTokens(v) {
-  return (v || "").split(/[,/]/).map(s => s.trim()).filter(s => s && s !== "--");
-}
-
 const ECO_LABEL = e => e || "Other";
-const ESC = s => (s || "").replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const GRAPH_SVG = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.6 5.9 11 3.4M4.7 8.3l6.1 3.6M13 5.5v4.6"/><circle cx="3" cy="7.4" r="2.1" fill="currentColor" stroke="none"/><circle cx="12.6" cy="3" r="1.7" fill="currentColor" stroke="none"/><circle cx="12.6" cy="12.6" r="1.7" fill="currentColor" stroke="none"/></svg>`;
 
 function matches(p) {
   if (state.featured && !isFeat(p)) return false;
@@ -1646,10 +1514,6 @@ function renderChips() {
   }));
 }
 
-const GH_SVG = `<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>`;
-const TYPE_CLASS = t => "t-" + (["spa", "backend", "blog", "library", "manual", "webfront"].includes(t.toLowerCase()) ? t.toLowerCase() : "other");
-const repoLabel = u => u.replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/\/$/, "") || u;
-
 function cardHTML(p) {
   const url = "https://" + p.domain;
   const fea = isFeat(p);
@@ -1676,8 +1540,8 @@ function cardHTML(p) {
   if (!badges.length) badges.push(`<span class="badge ext">live</span>`);
   const fwd = p.forward ? `<div class="fwd">→ forwards to <span class="mono">${ESC(p.forward)}</span></div>` : "";
   const uses = p.uses.length ? `<div class="uses"><b>uses</b> ${p.uses.map(ESC).join(", ")}</div>` : "";
-  const repos = p.repos.length
-    ? `<div class="cardfoot">${p.repos.map(r => `<a class="repo" href="${ESC(r)}" target="_blank" rel="noopener" title="${ESC(r)}">${GH_SVG}${ESC(repoLabel(r))}</a>`).join("")}</div>` : "";
+  const graphLink = `<a class="repo" href="graph.html?focus=${encodeURIComponent(splitList(p.service)[0] || p.domain)}" title="Show in the graph view">${GRAPH_SVG}graph</a>`;
+  const repos = `<div class="cardfoot">${p.repos.map(r => `<a class="repo" href="${ESC(r)}" target="_blank" rel="noopener" title="${ESC(r)}">${GH_SVG}${ESC(repoLabel(r))}</a>`).join("")}${graphLink}</div>`;
   return `<div class="card${fea ? " featured" : ""}">
     <div class="head">
       <div>
@@ -1732,24 +1596,21 @@ function setStatus(kind, text) {
 }
 
 /* initial paint from embedded snapshot */
+const q = document.getElementById("q");
+const q0 = new URLSearchParams(location.search).get("q");   // deep link, e.g. from the graph view
+if (q0) { q.value = q0; state.q = q0.trim().toLowerCase(); }
 setStatus("snap", "snapshot");
 render();
 
 /* live refresh: fetch both tabs and join them in the browser */
-Promise.all([
-  fetch(CSV_URL, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }),
-  fetch(CATALOG_URL, { cache: "no-store" }).then(r => r.ok ? r.text() : "").catch(() => ""),
-]).then(([pText, sText]) => {
-  const live = csvToProjects(pText);
-  if (!live.length) { setStatus("snap", "snapshot"); return; }
-  const services = sText ? csvToServices(sText) : (typeof SERVICES !== "undefined" ? SERVICES : []);
-  DATA = enrich(live, services);
+loadLive().then(({ projects, services }) => {
+  if (!projects.length) { setStatus("snap", "snapshot"); return; }
+  DATA = enrich(projects, services || (typeof SERVICES !== "undefined" ? SERVICES : []));
   render();
   setStatus("live", "live · synced with sheet");
 }).catch(() => setStatus("snap", "snapshot (offline)"));
 
 /* keyboard: "/" focuses search, Esc clears */
-const q = document.getElementById("q");
 q.addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); render(); });
 document.addEventListener("keydown", e => {
   if (e.key === "/" && document.activeElement !== q) { e.preventDefault(); q.focus(); }

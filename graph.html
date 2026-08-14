@@ -1,0 +1,2254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Project Graph · sirmmo</title>
+<meta name="description" content="How the deployed sirmmo services connect: dependencies, ecosystems and forwards as an interactive graph." />
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🛰️&lt;/text&gt;&lt;/svg&gt;" />
+<link rel="stylesheet" href="shell.css" />
+<style>
+  /* ---- graph-view layout: fixed viewport, the canvas takes what's left ---- */
+  body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header { position: static; flex: none; }
+  main { flex: 1 1 auto; position: relative; min-height: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  canvas.grabbing { cursor: grabbing; }
+
+  /* ---- heads-up controls ---- */
+  .hud { position: absolute; left: 18px; bottom: 16px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+  .hud > * { pointer-events: auto; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 12px 16px; max-width: 460px;
+    padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line);
+    background: rgba(18,21,31,.86); backdrop-filter: blur(8px); box-shadow: var(--shadow);
+    font-size: 11.5px; color: var(--txt-dim);
+  }
+  .legend i { display: inline-flex; align-items: center; gap: 7px; font-style: normal; }
+  .legend .sw { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+  .legend .sw.dep { background: #6ea8fe; }
+  .legend .sw.undep { background: transparent; border: 1.5px dashed #6b7488; }
+  .legend .sw.feat { background: #ffcf5a; box-shadow: 0 0 0 2px rgba(255,207,90,.3); }
+  .legend .sw.nok { background: var(--warn); }
+  .legend .ln { width: 20px; height: 0; border-top: 2px solid; flex: none; }
+  .legend .ln.uses { border-color: #6ea8fe; }
+  .legend .ln.eco { border-color: #7c5cff; opacity: .55; }
+  .legend .ln.fwd { border-top-style: dashed; border-color: var(--warn); }
+  .legend .ln.repo { border-top-style: dotted; border-color: var(--ok); }
+  .tools { display: flex; gap: 8px; align-items: center; }
+  .tools button {
+    font: inherit; font-size: 12.5px; color: var(--txt-dim); cursor: pointer;
+    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(22,26,38,.9); transition: all .14s;
+  }
+  .tools button:hover { color: var(--txt); border-color: var(--accent); }
+  .count { font-size: 12px; color: var(--txt-faint); padding-left: 4px; }
+
+  /* ---- hover tooltip ---- */
+  .tip {
+    position: absolute; z-index: 20; pointer-events: none; opacity: 0;
+    transform: translate(-50%, -140%); transition: opacity .1s;
+    padding: 7px 11px; border-radius: 9px; border: 1px solid var(--line);
+    background: rgba(12,14,20,.94); box-shadow: var(--shadow);
+    font-size: 12.5px; white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tip.on { opacity: 1; }
+  .tip .t2 { color: var(--txt-faint); font-size: 11px; margin-top: 2px; }
+
+  /* ---- detail panel ---- */
+  .panel {
+    position: absolute; top: 16px; right: 16px; bottom: 16px; width: 336px; max-width: calc(100vw - 32px);
+    display: none; flex-direction: column; gap: 13px; overflow-y: auto; overscroll-behavior: contain;
+    padding: 18px; border-radius: var(--radius); border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(22,26,38,.97), rgba(27,32,48,.97));
+    backdrop-filter: blur(10px); box-shadow: var(--shadow); z-index: 30;
+  }
+  .panel.open { display: flex; }
+  .panel.feat { border-color: rgba(255,200,90,.42); }
+  .panel h2 { margin: 0; font-size: 17px; line-height: 1.25; word-break: break-word; padding-right: 26px; }
+  .panel .eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--txt-faint); }
+  .panel .close {
+    position: absolute; top: 13px; right: 13px; width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center; cursor: pointer; color: var(--txt-faint);
+    border: 1px solid var(--line); background: var(--panel); font-size: 14px; line-height: 1;
+  }
+  .panel .close:hover { color: var(--txt); border-color: var(--accent); }
+  .panel .desc { font-size: 12.5px; line-height: 1.5; color: var(--txt-dim); }
+  .panel section { display: flex; flex-direction: column; gap: 7px; }
+  .panel section > .lbl { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--txt-faint); }
+  .panel .dep { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line-soft); background: var(--bg-soft); }
+  .panel .dep .d1 { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; word-break: break-all; }
+  .panel .dep .d1 .attn { margin-top: 0; }
+  .panel .dep a:hover { color: var(--accent); }
+  .panel .rel { display: flex; flex-wrap: wrap; gap: 6px; }
+  .panel .rel button {
+    font: inherit; font-size: 11.5px; cursor: pointer; color: var(--txt-dim);
+    padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-soft);
+  }
+  .panel .rel button:hover { color: var(--txt); border-color: var(--accent); }
+  .panel .meta { font-size: 11.5px; color: var(--txt-faint); word-break: break-all; }
+  .panel .meta b { color: var(--txt-dim); font-weight: 600; }
+  .panel .golist { font-size: 12px; color: var(--txt-dim); text-decoration: underline; text-underline-offset: 2px; }
+
+  @media (max-width: 720px) {
+    .panel { top: auto; right: 8px; left: 8px; bottom: 8px; width: auto; max-height: 52%; }
+    .hud { left: 10px; bottom: 10px; }
+    .legend { max-width: calc(100vw - 20px); font-size: 11px; gap: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo">🛰️</div>
+        <div>
+          <h1>Project Graph</h1>
+          <p>How the deployed services connect</p>
+        </div>
+      </div>
+      <div class="grow"></div>
+      <nav class="views">
+        <a href="./">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="6" height="5" rx="1.4"/><rect x="9" y="2" width="6" height="5" rx="1.4"/><rect x="1" y="9" width="6" height="5" rx="1.4"/><rect x="9" y="9" width="6" height="5" rx="1.4"/></svg>
+          List
+        </a>
+        <a class="on" href="graph.html" aria-current="page">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.6 5.9 11 3.4M4.7 8.3l6.1 3.6M13 5.5v4.6"/><circle cx="3" cy="7.4" r="2.1" fill="currentColor" stroke="none"/><circle cx="12.6" cy="3" r="1.7" fill="currentColor" stroke="none"/><circle cx="12.6" cy="12.6" r="1.7" fill="currentColor" stroke="none"/></svg>
+          Graph
+        </a>
+      </nav>
+      <span id="status" class="status snap"><span class="dot"></span><span id="statusText">loading…</span></span>
+      <a class="ghlink" href="https://github.com/sirmmo/projects" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        Repo
+      </a>
+    </div>
+    <div class="searchbar">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+      <input id="q" type="search" placeholder="Highlight by name, domain, type, repo, description…" autocomplete="off" spellcheck="false" />
+      <span class="hint"><kbd>/</kbd></span>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="chips types" id="edgeChips"></div>
+  </div>
+</header>
+
+<main>
+  <canvas id="cv" aria-label="Graph of deployed services and their dependencies. The list view at the site root carries the same information as text."></canvas>
+  <div class="hud">
+    <div class="legend" id="legend"></div>
+    <div class="tools">
+      <button id="fit" title="Fit the graph to the window">Fit</button>
+      <button id="shake" title="Re-run the layout">Re-layout</button>
+      <span class="count" id="count"></span>
+    </div>
+  </div>
+  <div class="tip" id="tip"></div>
+  <aside class="panel" id="panel"></aside>
+</main>
+
+<script src="sheet.js"></script>
+<script>
+/* DATA:START */
+const PROJECTS = [
+  {
+    "name": "",
+    "domain": "badgecollector.org",
+    "ecosystem": "BadgeCollector",
+    "service": "BadgeCollector",
+    "be": "Cloudflare",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://www.cityopensource.com",
+    "ecosystem": "cityopensource",
+    "service": "cityopensource",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://ingmmo.com/needle-openai",
+    "ecosystem": "Demo tech",
+    "service": "needle-openai wrapper",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "swpatterns.com",
+    "ecosystem": "Demo tech",
+    "service": "SoftwarePatterns",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://www.hoponmobility.com",
+    "ecosystem": "e-dway",
+    "service": "hoponmobility",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "cbrpnk.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "Server",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://github.com/openfantasymap/ticker",
+    "ecosystem": "FantasyMaps",
+    "service": "odw ticker",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "lcars.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "Server",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "map.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "Server",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "pipboy.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "stellarcartography.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "www.fantasymaps.org",
+    "ecosystem": "FantasyMaps",
+    "service": "OFM",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "www.fantasymaps.org/geomqtt/?url=wss%3A%2F%2Fgeomqtt.fantasymaps.org%2Fmqtt&set=iss",
+    "ecosystem": "FantasyMaps",
+    "service": "GeoMQTT",
+    "be": "Server",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "www.fantasymaps.org/maplibre-grid/",
+    "ecosystem": "FantasyMaps",
+    "service": "ofm-mlgrid",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "gaiawm.github.io",
+    "ecosystem": "GaiaWM",
+    "service": "GaiaWM",
+    "be": "",
+    "fe": "",
+    "others": "gh-pages",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "gaiawm.github.io/ghostdeck",
+    "ecosystem": "GaiaWM",
+    "service": "GhostDeck",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "gaiawm.github.io/ghostkit",
+    "ecosystem": "GaiaWM",
+    "service": "Ghostkit",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "ingmmo.com/aiproxy",
+    "ecosystem": "GaiaWM",
+    "service": "AI Proxy",
+    "be": "Vercel",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "www.fantasymaps.org/geobard",
+    "ecosystem": "GaiaWM",
+    "service": "geobard",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "geocontext.info",
+    "ecosystem": "GeoContext",
+    "service": "geocontext",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "geocontext.info/geocontext-front",
+    "ecosystem": "GeoContext",
+    "service": "geocontext",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "geocontext.info/geocontext-storybook",
+    "ecosystem": "GeoContext",
+    "service": "geocontext storybook",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "gestaltbi.github.io",
+    "ecosystem": "GestaltBI",
+    "service": "Gestalt BI",
+    "be": "--",
+    "fe": "--",
+    "others": "gh-pages",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "hgtfs.github.io",
+    "ecosystem": "HGTFS",
+    "service": "hgtfs",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "hgtfs.github.io/viewer",
+    "ecosystem": "HGTFS",
+    "service": "hgtfs viewer",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "hugo-tools.github.io",
+    "ecosystem": "Hugo Tools",
+    "service": "Hugo Tools",
+    "be": "--",
+    "fe": "--",
+    "others": "gh-pages",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "justplaybo.it",
+    "ecosystem": "Justplay",
+    "service": "Justplay Home",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "launcher.justplaybo.it",
+    "ecosystem": "Justplay",
+    "service": "jusplay games launcher",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "sherlock.justplaybo.it",
+    "ecosystem": "Justplay",
+    "service": "Sherlock Holmes Consulting Detective",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "nerderie.org",
+    "ecosystem": "Nerderie",
+    "service": "Nerderie Blog",
+    "be": "--",
+    "fe": "--",
+    "others": "Medium",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "ministry.ofdata.org",
+    "ecosystem": "Newsroom",
+    "service": "newsroom",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "mcp.rpg-schema.org",
+    "ecosystem": "OntoRAG",
+    "service": "ontorag mcp",
+    "be": "Vercel",
+    "fe": "--",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "mcp.tcg-schema.org",
+    "ecosystem": "OntoRAG",
+    "service": "ontorag mcp",
+    "be": "Vercel",
+    "fe": "--",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "ontorag.org",
+    "ecosystem": "OntoRAG",
+    "service": "OntoRAG",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "archaeo.pro",
+    "ecosystem": "OpenHistoryMap",
+    "service": "Archaeo Pro",
+    "be": "Vercel",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "blog.openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OHM Blog",
+    "be": "--",
+    "fe": "--",
+    "others": "Medium, Substack",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "games.ofancientrome.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "games.ofancientrome.org",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "games.ofthepast.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "games.ofthepast.org",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "ideas.ofancientrome.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "ideas.ofancientrome.org",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "index.openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OHM",
+    "be": "Server",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "map.of911.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "map of 911",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "map.ofww1.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "map.ofww1.org",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "map.ofww2.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "map.ofww2.org",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "map.openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OHM",
+    "be": "Server",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "ohm.openhistoryline.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "ohl",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "openculturemap.com",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OpenCultureMap",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "rulers.ofancientrome.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "rulers.ofancientrome.org",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "rulers.ofthepast.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "rulers.ofthepast.org",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "timeline.of911.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "events of 911",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "timeline.ofww1.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "ohl",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "timeline.ofww2.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "ohl",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "www.openhistorymap.org",
+    "ecosystem": "OpenHistoryMap",
+    "service": "OHM",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "rpg-schema.org",
+    "ecosystem": "RPG-schema",
+    "service": "OntoRAG",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "sirmmo.itch.io",
+    "ecosystem": "RPG-schema",
+    "service": "Vespri, Genova, Poseidonia, Foafp",
+    "be": "",
+    "fe": "",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "forge.cardsapi.com",
+    "ecosystem": "TCG-schema",
+    "service": "cardsapi forge",
+    "be": "Vercel",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "tcg-schema.org",
+    "ecosystem": "TCG-schema",
+    "service": "OntoRAG",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  }
+];
+const SERVICES = [
+  {
+    "name": "Archaeo Pro",
+    "type": "SPA",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openhistorymap/archaeo-pro",
+    "description": "Archaeo Pro - servizi per archeologi"
+  },
+  {
+    "name": "3D Model Commons",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OFM",
+    "type": "SPA, Backend, Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "OHM",
+    "repo": "https://github.com/FantasyMaps",
+    "description": ""
+  },
+  {
+    "name": "OHM",
+    "type": "SPA, Backend, Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openhistorymap",
+    "description": ""
+  },
+  {
+    "name": "holodocker",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/HoloDocker",
+    "description": ""
+  },
+  {
+    "name": "OntoRAG",
+    "type": "SPA, Backend, Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/ontorag",
+    "description": ""
+  },
+  {
+    "name": "Gestalt BI",
+    "type": "SPA",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/GestaltBI",
+    "description": ""
+  },
+  {
+    "name": "diryofanllm",
+    "type": "Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "diaryofelimkors",
+    "type": "Blog",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "wifi share",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/WiFiShare",
+    "description": "servzio di raccolta e share di reti wifi disponibili e pubbliche"
+  },
+  {
+    "name": "gitsign",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/sirmmo/gitsign.com",
+    "description": "dimmi che repo hai starrato e ti dirò chi sei"
+  },
+  {
+    "name": "newsroom",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Agents of the Multiverse",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OFM FleetCommand",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "BarCodeClash",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/BarCodeClash",
+    "description": ""
+  },
+  {
+    "name": "SoftwarePatterns",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "geocontext",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "OHM",
+    "repo": "https://github.com/ohm-geocontext",
+    "description": ""
+  },
+  {
+    "name": "BadgeCollector",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Justplay Home",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Sherlock Holmes Consulting Detective",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OpenGolfMap",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/sirmmo/opengolfmap",
+    "description": ""
+  },
+  {
+    "name": "GaiaWM",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "GeoMQTT, geobard, inspector, AI Proxy",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "GeoMQTT",
+    "type": "Backend, Library",
+    "subtype": "npm, Unity",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OpenCultureMap",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openhistorymap/openculturmap",
+    "description": ""
+  },
+  {
+    "name": "OpenArtMap",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "maplibre-grid",
+    "type": "Library",
+    "subtype": "npm",
+    "package": "@openfantasymap/maplibre-grid",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "rulers.ofthepast.org",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "rulers.ofancientrome.org",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "rulers.ofancientegypt.org",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "ideas.ofancientrome.org",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "cardsapi forge",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openfantasymap/cardsapi.designer",
+    "description": ""
+  },
+  {
+    "name": "ministry of data",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Vespri",
+    "type": "RPG Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/vespri-1282",
+    "uses": "OHM",
+    "repo": "https://github.com/sirmmo/palermo_1282",
+    "description": ""
+  },
+  {
+    "name": "Genova",
+    "type": "RPG Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/genova-1507",
+    "uses": "OHM",
+    "repo": "https://github.com/sirmmo/genova-1507",
+    "description": ""
+  },
+  {
+    "name": "Poseidonia",
+    "type": "RPG Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/la-corona-di-poseidonia",
+    "uses": "OHM",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Foafp",
+    "type": "RPG Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/figures-of-a-future-past",
+    "uses": "OFM",
+    "repo": "https://github.com/sirmmo/figures_of_a_future_past",
+    "description": ""
+  },
+  {
+    "name": "ECB-LAD",
+    "type": "RPG Manual",
+    "subtype": "itch.io",
+    "package": "https://sirmmo.itch.io/ecb-ludic-anomaly-division",
+    "uses": "",
+    "repo": "https://github.com/sirmmo/ecb-ludic-anomaly-division",
+    "description": ""
+  },
+  {
+    "name": "map.ofww2.org",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "map.ofww1.org",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "games.ofancientrome.org",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "jusplay games launcher",
+    "repo": "https://github.com/openhistorymap/games.ofancientrome.org",
+    "description": ""
+  },
+  {
+    "name": "jusplay games launcher",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "cardsapi forge",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "games.ofthepast.org",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "jusplay games launcher",
+    "repo": "https://github.com/openhistorymap/games.ofthepast.org",
+    "description": ""
+  },
+  {
+    "name": "ontorag mcp",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "ohl",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "timel.in",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "timel.in",
+    "type": "Library",
+    "subtype": "npm",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "geobard",
+    "type": "Library",
+    "subtype": "docker",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openfantasymap/geobard",
+    "description": ""
+  },
+  {
+    "name": "inspector",
+    "type": "Library",
+    "subtype": "docker",
+    "package": "",
+    "uses": "",
+    "repo": "https://github.com/openfantasymap/inspector",
+    "description": ""
+  },
+  {
+    "name": "ofm-mlgrid",
+    "type": "Library",
+    "subtype": "npm",
+    "package": "http://www.fantasymaps.org/maplibre-grid/",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "hgtfs",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "hgtfs viewer",
+    "type": "SPA",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "AI Proxy",
+    "type": "Library, Backend, Docker",
+    "subtype": "docker",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Whudunnit S&V",
+    "type": "RPG Manual",
+    "subtype": "itch.io",
+    "package": "",
+    "uses": "OFM",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Ghostkit",
+    "type": "Library",
+    "subtype": "pypy",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "GhostDeck",
+    "type": "Desktop",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Hugo Tools",
+    "type": "Desktop",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "OHM Blog",
+    "type": "",
+    "subtype": "medium",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Nerderie Blog",
+    "type": "",
+    "subtype": "medium",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Ontorag Hub",
+    "type": "SPA, Backend",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "map of 911",
+    "type": "",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "events of 911",
+    "type": "",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "vault of data",
+    "type": "",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "sheets of data",
+    "type": "",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "schema of data",
+    "type": "",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "trains of the past",
+    "type": "",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "geocontext storybook",
+    "type": "SPA, Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "OHM",
+    "repo": "https://github.com/ohm-geocontext/geocontext-storybook",
+    "description": ""
+  },
+  {
+    "name": "geocontext front",
+    "type": "SPA, Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "OHM",
+    "repo": "https://github.com/ohm-geocontext/geocontext-front",
+    "description": ""
+  },
+  {
+    "name": "cities of distant worlds",
+    "type": "SPA, Backend",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "odw ticker",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "wars of distant worlds",
+    "type": "SPA, Backend",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "odw ticker",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "inns of distant worlds",
+    "type": "SPA, Backend",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "odw ticker",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "tansports of distant worlds",
+    "type": "SPA, Backend",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "odw ticker",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "odw ticker",
+    "type": "Docker",
+    "subtype": "docker",
+    "package": "ghcr.io/openfantasymap/ticker",
+    "uses": "",
+    "repo": "https://github.com/openfantasymap/ticker",
+    "description": ""
+  },
+  {
+    "name": "needle-openai wrapper",
+    "type": "Docker",
+    "subtype": "pypy, docker",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "hoponmobility",
+    "type": "SPA, Backend, Webfront, Docker",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "cityopensource",
+    "type": "Webfront",
+    "subtype": "",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  }
+];
+/* DATA:END */
+
+/* ============================================================
+   Graph model
+
+   Nodes are catalog services (the `uses` column connects them by name),
+   enriched with the deployed rows that run them; services with no deployed
+   domain stay in as "not deployed" nodes. Ecosystem hubs are synthesised so
+   that the many services with no dependency edge still have somewhere to sit.
+
+   Edges:
+     uses  service -> service   (catalog `uses`)
+     eco   service -> ecosystem (deployed row's `ecosystem`)
+     fwd   service -> service   (deployed row's `forward to`, matched on domain)
+     repo  service -- service   (two services sharing one repository)
+   ============================================================ */
+function buildGraph(projects, services) {
+  const nodes = [];
+  const byKey = new Map();
+
+  const svcNode = name => {
+    const key = "s:" + norm(name);
+    let n = byKey.get(key);
+    if (!n) {
+      n = { key, kind: "svc", name, types: [], subtypes: [], pkg: "", repo: "", desc: "",
+            uses: [], deploys: [], ecos: [], domains: [], deployed: false, featured: false, nok: false };
+      nodes.push(n); byKey.set(key, n);
+    }
+    return n;
+  };
+
+  (services || []).forEach(s => {
+    if (!s.name) return;
+    const n = svcNode(s.name);
+    n.types = uniq(n.types.concat(splitList(s.type)));
+    n.subtypes = uniq(n.subtypes.concat(splitList(s.subtype)));
+    n.uses = uniq(n.uses.concat(splitList(s.uses)));
+    n.pkg = n.pkg || s.package;
+    n.repo = n.repo || s.repo;
+    n.desc = n.desc || s.description;
+  });
+
+  // Attach deployed rows. One row can run several services (comma-separated).
+  const idx = serviceIndex(services);
+  const deployedOn = [];
+  (projects || []).forEach(p => {
+    const matched = servicesFor(p, idx);
+    const names = matched.length ? matched.map(s => s.name) : [p.service || p.domain];
+    const ns = names.filter(Boolean).map(nm => {
+      const n = svcNode(nm);
+      n.deploys.push(p);
+      n.deployed = true;
+      if (p.domain) n.domains = uniq(n.domains.concat([p.domain]));
+      if (p.ecosystem) n.ecos = uniq(n.ecos.concat([p.ecosystem]));
+      if (isFeat(p)) n.featured = true;
+      if ((p.attention || "").toLowerCase() === "nok") n.nok = true;
+      return n;
+    });
+    deployedOn.push({ p, ns });
+  });
+
+  // Ecosystem hubs. Hues are spread by the golden angle over the sorted list so
+  // neighbouring ecosystems never end up the same colour.
+  const ecoNames = uniq(nodes.flatMap(n => n.ecos)).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  const hueOf = {};
+  ecoNames.forEach((e, i) => { hueOf[e] = Math.round((i * 137.508 + 205) % 360); });
+  ecoNames.forEach(e => {
+    const n = { key: "e:" + norm(e), kind: "eco", name: e, hue: hueOf[e], members: 0 };
+    nodes.push(n); byKey.set(n.key, n);
+  });
+
+  const links = [];
+  const seen = new Set();
+  const link = (s, t, kind) => {
+    if (!s || !t || s === t) return;
+    const id = kind + "|" + s.key + "|" + t.key;
+    if (seen.has(id)) return;
+    seen.add(id);
+    links.push({ s, t, kind });
+  };
+
+  nodes.filter(n => n.kind === "svc").forEach(n => {
+    n.ecos.forEach(e => {
+      const hub = byKey.get("e:" + norm(e));
+      if (hub) { hub.members++; link(n, hub, "eco"); }
+    });
+    n.uses.forEach(u => link(n, byKey.get("s:" + norm(u)), "uses"));
+  });
+
+  const byDomain = new Map();
+  nodes.forEach(n => (n.domains || []).forEach(d => byDomain.set(norm(d), n)));
+  deployedOn.forEach(({ p, ns }) => {
+    if (!p.forward) return;
+    const target = byDomain.get(norm(p.forward));
+    ns.forEach(n => link(n, target, "fwd"));
+  });
+
+  // Services sharing a repository, chained rather than fully connected.
+  const byRepo = new Map();
+  nodes.filter(n => n.kind === "svc" && n.repo).forEach(n => {
+    const k = n.repo.toLowerCase().replace(/\/$/, "");
+    if (!byRepo.has(k)) byRepo.set(k, []);
+    byRepo.get(k).push(n);
+  });
+  byRepo.forEach(group => {
+    for (let i = 1; i < group.length; i++) link(group[i - 1], group[i], "repo");
+  });
+
+  // A service takes the colour of its (first) ecosystem.
+  nodes.forEach(n => {
+    if (n.kind === "svc") n.hue = n.ecos.length && hueOf[n.ecos[0]] != null ? hueOf[n.ecos[0]] : null;
+    n.deg = 0;
+  });
+  links.forEach(l => { if (l.kind !== "eco") { l.s.deg++; l.t.deg++; } });
+
+  // Catalog entries with no ecosystem and no dependency carry no relational
+  // information — they are parked on a ring instead of joining the simulation,
+  // where they would either invade the core or blow the graph up into a halo.
+  const linked = new Set();
+  links.forEach(l => { linked.add(l.s); linked.add(l.t); });
+  nodes.forEach(n => { n.loose = n.kind === "svc" && !linked.has(n); });
+
+  return { nodes, links, byKey };
+}
+
+/* ---------- deterministic initial layout ---------- */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function seedPositions(G, keep) {
+  const rnd = mulberry32(0x5EED);
+  const place = (n, x, y) => { n.x = x; n.y = y; n.vx = 0; n.vy = 0; };
+  const kept = n => {
+    const old = keep && keep.get(n.key);
+    if (old) place(n, old.x, old.y);
+    return !!old;
+  };
+
+  // Hubs first: the services are then seeded around the hub they belong to.
+  const hubs = G.nodes.filter(n => n.kind === "eco");
+  hubs.forEach((n, k) => {
+    if (kept(n)) return;
+    const a = (k / Math.max(hubs.length, 1)) * Math.PI * 2;
+    place(n, Math.cos(a) * 340, Math.sin(a) * 340);
+  });
+
+  // Services with no ecosystem (catalog-only) go on an outer ring.
+  const loose = G.nodes.filter(n => n.kind === "svc" && !n.ecos.length);
+  G.nodes.filter(n => n.kind === "svc").forEach(n => {
+    if (kept(n)) return;
+    const hub = n.ecos.length ? G.byKey.get("e:" + norm(n.ecos[0])) : null;
+    const a = rnd() * Math.PI * 2, r = 40 + rnd() * 90;
+    if (hub) place(n, hub.x + Math.cos(a) * r, hub.y + Math.sin(a) * r);
+    else {
+      const k = loose.indexOf(n), b = (k / Math.max(loose.length, 1)) * Math.PI * 2;
+      place(n, Math.cos(b) * 640, Math.sin(b) * 640);
+    }
+  });
+}
+
+/* ---------- force simulation (small graph, plain O(n²) repulsion) ---------- */
+const SPRING = {
+  eco:  { len: 132, k: 0.018 },
+  uses: { len: 178, k: 0.032 },
+  fwd:  { len: 130, k: 0.028 },
+  repo: { len: 92,  k: 0.020 },
+};
+const CHARGE = { eco: 9000, svc: 2100 };
+
+let alpha = 1;
+const reheat = (v = 0.75) => { alpha = Math.max(alpha, v); if (!raf) raf = requestAnimationFrame(frame); };
+
+/* Unlinked services sit on an ellipse around whatever the simulation produced,
+   in a stable alphabetical order. */
+function placeLoose() {
+  const loose = G.nodes.filter(n => n.vis && n.loose);
+  if (!loose.length) return;
+  const linked = G.nodes.filter(n => n.vis && !n.loose);
+  let cx = 0, cy = 0, rx = 380, ry = 300;
+  if (linked.length) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    linked.forEach(n => {
+      x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x);
+      y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y);
+    });
+    cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+    rx = (x1 - x0) / 2 + 160;                    // an ellipse tracking the core's shape
+    ry = Math.max((y1 - y0) / 2 + 130, rx * 0.42);
+  }
+  loose.forEach((n, i) => {
+    const a = -Math.PI / 2 + (i / loose.length) * Math.PI * 2;
+    n.x = cx + Math.cos(a) * rx;
+    n.y = cy + Math.sin(a) * ry;
+    n.vx = n.vy = 0;
+  });
+}
+
+function tick() {
+  const vis = G.nodes.filter(n => n.vis && !n.loose);
+  for (let i = 0; i < vis.length; i++) {
+    const a = vis[i];
+    for (let j = i + 1; j < vis.length; j++) {
+      const b = vis[j];
+      let dx = b.x - a.x, dy = b.y - a.y;
+      let d2 = dx * dx + dy * dy;
+      if (d2 < 0.5) { dx = (i - j) * 0.05 + 0.3; dy = 0.3; d2 = dx * dx + dy * dy; }
+      const d = Math.sqrt(d2);
+      const rep = (CHARGE[a.kind] + CHARGE[b.kind]) / 2 / d2;
+      const fx = dx / d * rep, fy = dy / d * rep;
+      a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy;
+    }
+  }
+  G.links.forEach(l => {
+    if (!l.vis) return;
+    const a = l.s, b = l.t, cfg = SPRING[l.kind];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const d = Math.max(Math.hypot(dx, dy), 0.01);
+    const f = (d - cfg.len) * cfg.k;
+    const fx = dx / d * f, fy = dy / d * f;
+    a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+  });
+  vis.forEach(n => {
+    n.vx += -n.x * 0.0021; n.vy += -n.y * 0.0021;      // gravity to the centre
+    if (n === dragging) { n.vx = n.vy = 0; return; }
+    n.vx *= 0.85; n.vy *= 0.85;
+    n.x += n.vx * alpha; n.y += n.vy * alpha;
+  });
+  placeLoose();
+  alpha *= 0.992;
+}
+
+/* ---------- view state ---------- */
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const tipEl = document.getElementById("tip");
+const panel = document.getElementById("panel");
+const view = { s: 1, x: 0, y: 0 };            // screen = world * s + (x, y)
+const state = { q: "", eco: null, attn: false, featured: false, undeployed: false };
+const edgeOn = { uses: true, eco: true, fwd: true, repo: true };
+let G, hover = null, sel = null, dragging = null, raf = null, W = 0, H = 0, dpr = 1;
+
+const toWorld = (px, py) => [(px - view.x) / view.s, (py - view.y) / view.s];
+
+function visible(n) {
+  if (n.kind === "eco") return state.eco === null ? !state.undeployed : n.name === state.eco;
+  if (state.undeployed && n.deployed) return false;
+  if (state.featured && !n.featured) return false;
+  if (state.attn && !n.nok) return false;
+  if (state.eco !== null && !n.ecos.includes(state.eco)) return false;
+  return true;
+}
+function applyFilters() {
+  G.nodes.forEach(n => { n.vis = visible(n); });
+  // A dependency that is only in the catalog (no domain of its own, so no
+  // ecosystem) would drop out of an ecosystem filter and leave its dependents
+  // looking unconnected — pull those neighbours back in.
+  if (state.eco !== null) {
+    G.links.forEach(l => {
+      if (l.kind !== "uses") return;
+      if (l.s.vis && !l.t.deployed) l.t.vis = true;
+      if (l.t.vis && !l.s.deployed) l.s.vis = true;
+    });
+  }
+  // Drop ecosystem hubs left without a single visible member.
+  const populated = new Set();
+  G.links.forEach(l => { if (l.kind === "eco" && l.s.vis) populated.add(l.t); });
+  G.nodes.forEach(n => { if (n.kind === "eco" && !populated.has(n)) n.vis = false; });
+
+  G.links.forEach(l => { l.vis = edgeOn[l.kind] && l.s.vis && l.t.vis; });
+  document.getElementById("count").textContent =
+    `${G.nodes.filter(n => n.vis && n.kind === "svc").length} services · ` +
+    `${G.links.filter(l => l.vis && l.kind !== "eco").length} connections`;
+}
+
+const haystack = n => [n.name, n.desc, n.pkg, n.repo, n.domains.join(" "), n.ecos.join(" "),
+  n.types.join(" "), n.subtypes.join(" "), n.deploys.map(p => p.name).join(" ")].join(" ").toLowerCase();
+function isMatch(n) {
+  if (!state.q) return true;
+  if (n.kind === "eco") return n.name.toLowerCase().includes(state.q);
+  return state.q.split(/\s+/).every(t => haystack(n).includes(t));
+}
+
+/* neighbourhood of the hovered / selected node, used to fade everything else */
+function focusSet() {
+  const f = hover || sel;
+  if (!f) return null;
+  const set = new Set([f]);
+  G.links.forEach(l => { if (l.vis && l.s === f) set.add(l.t); else if (l.vis && l.t === f) set.add(l.s); });
+  return set;
+}
+
+/* ---------- drawing ----------
+   Shapes are drawn in world space (they zoom); all text is drawn in screen
+   space at a fixed size, so labels stay readable at any zoom level. Node radii
+   have a screen-space floor for the same reason — hit testing uses the same
+   function, so the two stay in agreement. */
+const nodeR = n => Math.max(6 + 3.1 * Math.sqrt(n.deg) + (n.deployed ? 2 : 0), 5.5 / view.s);
+const toScreen = n => [n.x * view.s + view.x, n.y * view.s + view.y];
+const px = v => v / view.s;                       // screen pixels -> world units
+const LABEL_FONT = "12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif";
+const HUB_FONT = "700 12.5px -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif";
+const svcFill = n => n.hue === null ? "rgba(120,130,155,.30)" : `hsla(${n.hue},58%,58%,.92)`;
+const svcLine = n => n.hue === null ? "rgba(150,160,185,.55)" : `hsla(${n.hue},70%,72%,.95)`;
+
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function draw() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.setTransform(dpr * view.s, 0, 0, dpr * view.s, dpr * view.x, dpr * view.y);
+  ctx.lineCap = "round";
+  const focus = focusSet();
+  const dim = n => (focus && !focus.has(n)) || !isMatch(n);
+
+  /* edges */
+  G.links.forEach(l => {
+    if (!l.vis) return;
+    const faded = focus ? !(focus.has(l.s) && focus.has(l.t)) : (!isMatch(l.s) && !isMatch(l.t));
+    ctx.globalAlpha = faded ? 0.10 : 1;
+    const hue = l.kind === "eco" ? (l.t.hue != null ? l.t.hue : 250) : null;
+    ctx.setLineDash(l.kind === "fwd" ? [px(7), px(6)] : l.kind === "repo" ? [px(2), px(5)] : []);
+    if (l.kind === "eco")       { ctx.strokeStyle = `hsla(${hue},60%,62%,.20)`; ctx.lineWidth = px(1.1); }
+    else if (l.kind === "uses") { ctx.strokeStyle = "rgba(126,178,255,.62)";    ctx.lineWidth = px(1.7); }
+    else if (l.kind === "fwd")  { ctx.strokeStyle = "rgba(255,180,84,.7)";      ctx.lineWidth = px(1.6); }
+    else                        { ctx.strokeStyle = "rgba(67,211,158,.5)";      ctx.lineWidth = px(1.4); }
+    ctx.beginPath();
+    ctx.moveTo(l.s.x, l.s.y);
+    ctx.lineTo(l.t.x, l.t.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (l.kind === "uses" || l.kind === "fwd") arrow(l);
+  });
+  ctx.globalAlpha = 1;
+
+  /* service nodes (world space) */
+  G.nodes.forEach(n => {
+    if (!n.vis || n.kind !== "svc") return;
+    ctx.globalAlpha = dim(n) ? 0.16 : 1;
+    drawSvc(n);
+  });
+
+  /* text and ecosystem pills (screen space, constant size) */
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawLabels(dim);
+  ctx.globalAlpha = 1;
+}
+
+/* Ecosystem pills are always drawn; service labels are then placed in priority
+   order and dropped when they would collide with something already on screen,
+   so the picture stays readable at any zoom instead of turning into a smear. */
+function drawLabels(dim) {
+  const placed = [];
+  const clear = r => !placed.some(p => !(r.x1 < p.x0 || r.x0 > p.x1 || r.y1 < p.y0 || r.y0 > p.y1));
+
+  G.nodes.filter(n => n.vis && n.kind === "eco").forEach(n => {
+    ctx.globalAlpha = dim(n) ? 0.16 : 1;
+    placed.push(drawHub(n));
+  });
+
+  const rank = n => (n === hover || n === sel ? 0 : n.featured ? 1 : n.deg ? 2 : n.deployed ? 3 : 4);
+  const svc = G.nodes.filter(n => n.vis && n.kind === "svc" && !dim(n))
+    .sort((a, b) => rank(a) - rank(b) || b.deg - a.deg || a.name.localeCompare(b.name));
+
+  ctx.globalAlpha = 1;
+  ctx.font = LABEL_FONT;
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  svc.forEach(n => {
+    const [sx, sy] = toScreen(n);
+    const w = Math.min(ctx.measureText(n.name).width, 150);
+    const y = sy + nodeR(n) * view.s + 5;
+    const box = { x0: sx - w / 2 - 4, x1: sx + w / 2 + 4, y0: y - 2, y1: y + 15 };
+    const must = n === hover || n === sel;
+    if (!must && !clear(box)) return;
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(12,14,20,.85)"; ctx.lineWidth = 3.5;
+    ctx.strokeText(n.name, sx, y, 150);
+    ctx.fillStyle = n.deployed ? "#cfd6e6" : "#7d8598";
+    ctx.fillText(n.name, sx, y, 150);
+    placed.push(box);
+  });
+}
+
+function arrow(l) {
+  const dx = l.t.x - l.s.x, dy = l.t.y - l.s.y;
+  const d = Math.max(Math.hypot(dx, dy), 0.01);
+  const ux = dx / d, uy = dy / d;
+  const gap = (l.t.kind === "eco" ? px(16) : nodeR(l.t)) + px(3);
+  const tx = l.t.x - ux * gap, ty = l.t.y - uy * gap;
+  const a = px(5.5);
+  ctx.beginPath();
+  ctx.moveTo(tx, ty);
+  ctx.lineTo(tx - ux * a - uy * a * .62, ty - uy * a + ux * a * .62);
+  ctx.lineTo(tx - ux * a + uy * a * .62, ty - uy * a - ux * a * .62);
+  ctx.closePath();
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.fill();
+}
+
+function drawHub(n) {
+  const [sx, sy] = toScreen(n);
+  ctx.font = HUB_FONT;
+  const w = ctx.measureText(n.name).width + 26, h = 28;
+  n.w = w / view.s; n.h = h / view.s;              // hit testing happens in world units
+  rr(sx - w / 2, sy - h / 2, w, h, 14);
+  ctx.fillStyle = "rgba(12,14,20,.82)";
+  ctx.fill();
+  ctx.fillStyle = `hsla(${n.hue},55%,52%,.22)`;
+  ctx.fill();
+  ctx.strokeStyle = n === sel || n === hover ? `hsla(${n.hue},80%,72%,.95)` : `hsla(${n.hue},65%,64%,.55)`;
+  ctx.lineWidth = n === sel || n === hover ? 2 : 1.2;
+  ctx.stroke();
+  ctx.fillStyle = `hsl(${n.hue},75%,80%)`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(n.name, sx, sy + .5);
+  return { x0: sx - w / 2, x1: sx + w / 2, y0: sy - h / 2, y1: sy + h / 2 };
+}
+
+function drawSvc(n) {
+  const r = nodeR(n);
+  ctx.beginPath();
+  ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+  if (n.deployed) {
+    ctx.fillStyle = svcFill(n); ctx.fill();
+  } else {
+    ctx.fillStyle = "rgba(18,21,31,.9)"; ctx.fill();
+    ctx.setLineDash([px(2.5), px(3)]);
+  }
+  ctx.strokeStyle = svcLine(n);
+  ctx.lineWidth = px(n.deployed ? 1 : 1.3);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (n.featured) {
+    ctx.beginPath(); ctx.arc(n.x, n.y, r + px(3.5), 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,207,90,.9)"; ctx.lineWidth = px(1.8); ctx.stroke();
+  }
+  if (n === sel || n === hover) {
+    ctx.beginPath(); ctx.arc(n.x, n.y, r + px(n.featured ? 7 : 5), 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(231,234,243,.85)"; ctx.lineWidth = px(1.4); ctx.stroke();
+  }
+  if (n.nok) {
+    ctx.beginPath(); ctx.arc(n.x + r * .78, n.y - r * .78, r * .32, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffb454"; ctx.fill();
+    ctx.strokeStyle = "rgba(12,14,20,.9)"; ctx.lineWidth = 1; ctx.stroke();
+  }
+}
+
+function frame() {
+  raf = null;
+  if (alpha > 0.004) { tick(); raf = requestAnimationFrame(frame); }
+  draw();
+}
+
+/* ---------- sizing / fit ---------- */
+function resize() {
+  const r = cv.getBoundingClientRect();
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = r.width; H = r.height;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  draw();
+}
+function fit() {
+  const vis = G.nodes.filter(n => n.vis);
+  if (!vis.length) return;
+  // Bounding box of the centres plus a flat margin — deliberately independent
+  // of view.s, which this function is about to change.
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  vis.forEach(n => {
+    x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x);
+    y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y);
+  });
+  const pad = 46;
+  x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
+  const rightGutter = panel.classList.contains("open") && W > 720 ? 360 : 24;
+  const s = Math.min((W - rightGutter - 24) / (x1 - x0), (H - 90) / (y1 - y0));
+  view.s = Math.max(0.22, Math.min(1.6, s));
+  view.x = (W - rightGutter) / 2 - (x0 + x1) / 2 * view.s;
+  view.y = (H - 60) / 2 - (y0 + y1) / 2 * view.s;
+  draw();
+}
+
+/* ---------- hit testing & pointer interaction ---------- */
+function nodeAt(px, py) {
+  const [wx, wy] = toWorld(px, py);
+  let best = null, bestD = Infinity;
+  for (const n of G.nodes) {
+    if (!n.vis) continue;
+    if (n.kind === "eco") {
+      const w = (n.w || 90) / 2, h = (n.h || 28) / 2;
+      if (Math.abs(wx - n.x) <= w && Math.abs(wy - n.y) <= h) return n;
+    } else {
+      const d = Math.hypot(wx - n.x, wy - n.y), r = nodeR(n) + 6;
+      if (d <= r && d < bestD) { best = n; bestD = d; }
+    }
+  }
+  return best;
+}
+
+let pan = null, downAt = null, moved = false;
+cv.addEventListener("pointerdown", e => {
+  cv.setPointerCapture(e.pointerId);
+  const rect = cv.getBoundingClientRect();
+  const px = e.clientX - rect.left, py = e.clientY - rect.top;
+  downAt = { px, py };
+  moved = false;
+  const n = nodeAt(px, py);
+  if (n) { dragging = n; reheat(0.35); }
+  else { pan = { x: e.clientX - view.x, y: e.clientY - view.y }; cv.classList.add("grabbing"); }
+});
+cv.addEventListener("pointermove", e => {
+  const rect = cv.getBoundingClientRect();
+  const px = e.clientX - rect.left, py = e.clientY - rect.top;
+  if (downAt && Math.hypot(px - downAt.px, py - downAt.py) > 4) moved = true;
+  if (dragging) {
+    const [wx, wy] = toWorld(px, py);
+    dragging.x = wx; dragging.y = wy;
+    reheat(0.3);
+    return;
+  }
+  if (pan) { view.x = e.clientX - pan.x; view.y = e.clientY - pan.y; draw(); return; }
+  const n = nodeAt(px, py);
+  if (n !== hover) { hover = n; showTip(n, px, py); draw(); }
+  else if (n) showTip(n, px, py);
+});
+function endPointer(e) {
+  if (dragging && !moved) select(dragging);
+  else if (!dragging && pan && !moved) select(null);
+  dragging = null; pan = null; downAt = null;
+  cv.classList.remove("grabbing");
+}
+cv.addEventListener("pointerup", endPointer);
+cv.addEventListener("pointercancel", endPointer);
+cv.addEventListener("pointerleave", () => { hover = null; tipEl.classList.remove("on"); draw(); });
+cv.addEventListener("dblclick", e => {
+  const rect = cv.getBoundingClientRect();
+  const n = nodeAt(e.clientX - rect.left, e.clientY - rect.top);
+  if (n && n.kind === "svc" && n.domains.length) window.open("https://" + n.domains[0], "_blank", "noopener");
+});
+cv.addEventListener("wheel", e => {
+  e.preventDefault();
+  const rect = cv.getBoundingClientRect();
+  const px = e.clientX - rect.left, py = e.clientY - rect.top;
+  const [wx, wy] = toWorld(px, py);
+  const k = Math.exp(-e.deltaY * 0.0016);
+  view.s = Math.max(0.15, Math.min(3, view.s * k));
+  view.x = px - wx * view.s; view.y = py - wy * view.s;
+  draw();
+}, { passive: false });
+
+function showTip(n, px, py) {
+  if (!n) { tipEl.classList.remove("on"); return; }
+  const sub = n.kind === "eco"
+    ? `${n.members} service${n.members === 1 ? "" : "s"}`
+    : [n.domains[0], n.types.join(" · "), n.deployed ? "" : "not deployed"].filter(Boolean).join(" · ");
+  tipEl.innerHTML = `<div>${ESC(n.name)}</div>` + (sub ? `<div class="t2">${ESC(sub)}</div>` : "");
+  tipEl.style.left = px + "px";
+  tipEl.style.top = py + "px";
+  tipEl.classList.add("on");
+}
+
+/* ---------- detail panel ---------- */
+function select(n) {
+  sel = n;
+  if (!n) { panel.classList.remove("open"); draw(); return; }
+  panel.className = "panel open" + (n.kind === "svc" && n.featured ? " feat" : "");
+  panel.innerHTML = n.kind === "eco" ? hubPanel(n) : svcPanel(n);
+  panel.scrollTop = 0;
+  panel.querySelector(".close").addEventListener("click", () => select(null));
+  panel.querySelectorAll("[data-go]").forEach(b =>
+    b.addEventListener("click", () => { const t = G.byKey.get(b.dataset.go); if (t && t.vis) { select(t); center(t); } }));
+  draw();
+}
+function center(n) {
+  view.x = (W - (W > 720 ? 360 : 0)) / 2 - n.x * view.s;
+  view.y = H / 2 - n.y * view.s;
+  draw();
+}
+
+function relBtns(list) {
+  return list.map(n => `<button data-go="${ESC(n.key)}">${ESC(n.name)}</button>`).join("");
+}
+function svcPanel(n) {
+  const usesN = G.links.filter(l => l.kind === "uses" && l.s === n).map(l => l.t);
+  const usedBy = G.links.filter(l => l.kind === "uses" && l.t === n).map(l => l.s);
+  const fwd = G.links.filter(l => l.kind === "fwd" && l.s === n).map(l => l.t);
+  const types = n.types.length
+    ? `<div class="types">${n.types.map(t => `<span class="tbadge ${TYPE_CLASS(t)}">${ESC(t)}</span>`).join("")}
+       ${n.subtypes.length ? `<span class="sub solo">${n.subtypes.map(ESC).join(", ")}</span>` : ""}</div>` : "";
+  const deploys = n.deploys.map(p => {
+    const badges = hostTokens(p.fe).map(t => `<span class="badge ${hostClass(t)}">${ESC(t)}</span>`)
+      .concat(hostTokens(p.be).map(t => `<span class="badge ${hostClass(t)}">${ESC(t)} ·be</span>`))
+      .concat(hostTokens(p.others).map(t => `<span class="badge ext">${ESC(t)}</span>`));
+    const nok = (p.attention || "").toLowerCase() === "nok";
+    return `<div class="dep">
+      <div class="d1">
+        <a href="https://${ESC(p.domain)}" target="_blank" rel="noopener">${ESC(p.domain)} ↗</a>
+        <span class="attn ${nok ? "nok" : ""}" title="${nok ? "Needs attention" : "OK"}"></span>
+      </div>
+      ${p.ecosystem ? `<div class="meta"><b>${ESC(p.ecosystem)}</b></div>` : ""}
+      ${badges.length ? `<div class="badges">${badges.join("")}</div>` : ""}
+      ${p.forward ? `<div class="meta">→ forwards to <span class="mono">${ESC(p.forward)}</span></div>` : ""}
+    </div>`;
+  }).join("");
+
+  return `<div class="close" title="Close">✕</div>
+    <div>
+      <div class="eyebrow">${n.deployed ? "Deployed service" : "Catalog service · not deployed"}</div>
+      <h2>${n.featured ? '<span class="star">★</span> ' : ""}${ESC(n.name)}</h2>
+    </div>
+    ${types}
+    ${n.desc ? `<div class="desc">${ESC(n.desc)}</div>` : ""}
+    ${deploys ? `<section><span class="lbl">Deployments</span>${deploys}</section>` : ""}
+    ${usesN.length ? `<section><span class="lbl">Uses</span><div class="rel">${relBtns(usesN)}</div></section>` : ""}
+    ${usedBy.length ? `<section><span class="lbl">Used by</span><div class="rel">${relBtns(usedBy)}</div></section>` : ""}
+    ${fwd.length ? `<section><span class="lbl">Forwards to</span><div class="rel">${relBtns(fwd)}</div></section>` : ""}
+    ${n.pkg ? `<div class="meta"><b>package</b> ${ESC(n.pkg)}</div>` : ""}
+    ${n.repo ? `<div><a class="repo" href="${ESC(n.repo)}" target="_blank" rel="noopener">${GH_SVG}${ESC(repoLabel(n.repo))}</a></div>` : ""}
+    <a class="golist" href="./?q=${encodeURIComponent(n.name)}">Open in the list view →</a>`;
+}
+function hubPanel(n) {
+  const members = G.links.filter(l => l.kind === "eco" && l.t === n).map(l => l.s)
+    .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  return `<div class="close" title="Close">✕</div>
+    <div>
+      <div class="eyebrow">Ecosystem</div>
+      <h2>${ESC(n.name)}</h2>
+    </div>
+    <div class="meta">${members.length} deployed service${members.length === 1 ? "" : "s"}</div>
+    <section><span class="lbl">Services</span><div class="rel">${relBtns(members)}</div></section>
+    <a class="golist" href="./?q=${encodeURIComponent(n.name)}">Open in the list view →</a>`;
+}
+
+/* ---------- chips ---------- */
+function renderChips() {
+  const svc = G.nodes.filter(n => n.kind === "svc");
+  const counts = {};
+  svc.forEach(n => n.ecos.forEach(e => { counts[e] = (counts[e] || 0) + 1; }));
+  const ecos = Object.keys(counts).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  const feat = svc.filter(n => n.featured).length;
+  const nok = svc.filter(n => n.nok).length;
+  const und = svc.filter(n => !n.deployed).length;
+  const allOn = state.eco === null && !state.attn && !state.featured && !state.undeployed;
+
+  let html = `<div class="chip ${allOn ? "on" : ""}" data-eco="__all">All <span class="n">${svc.length}</span></div>`;
+  if (feat) html += `<div class="chip star ${state.featured ? "on" : ""}" data-feat="1">★ Featured <span class="n">${feat}</span></div>`;
+  ecos.forEach(e => {
+    html += `<div class="chip ${state.eco === e ? "on" : ""}" data-eco="${ESC(e)}">${ESC(e)} <span class="n">${counts[e]}</span></div>`;
+  });
+  if (nok) html += `<div class="chip attn ${state.attn ? "on" : ""}" data-attn="1">⚠ Needs attention <span class="n">${nok}</span></div>`;
+  if (und) html += `<div class="chip ${state.undeployed ? "on" : ""}" data-und="1">◦ Not deployed <span class="n">${und}</span></div>`;
+  const el = document.getElementById("chips");
+  el.innerHTML = html;
+  el.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+    const d = ch.dataset;
+    if (d.feat) state.featured = !state.featured;
+    else if (d.attn) state.attn = !state.attn;
+    else if (d.und) { state.undeployed = !state.undeployed; if (state.undeployed) state.eco = null; }
+    else if (d.eco === "__all") { state.eco = null; state.attn = false; state.featured = false; state.undeployed = false; }
+    else { state.eco = state.eco === d.eco ? null : d.eco; if (state.eco) state.undeployed = false; }
+    if (sel && !visible(sel)) select(null);
+    renderChips(); applyFilters(); reheat(0.8);
+    setTimeout(() => fit(), 260);
+  }));
+
+  const kinds = [["uses", "uses"], ["eco", "ecosystem"], ["fwd", "forwards"], ["repo", "shared repo"]];
+  const present = k => G.links.some(l => l.kind === k);
+  const eEl = document.getElementById("edgeChips");
+  eEl.innerHTML = `<span class="flabel">Edges</span>` + kinds.filter(([k]) => present(k)).map(([k, label]) =>
+    `<div class="chip kind ${edgeOn[k] ? "on" : ""}" data-edge="${k}">${label} <span class="n">${G.links.filter(l => l.kind === k).length}</span></div>`).join("");
+  eEl.querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+    edgeOn[ch.dataset.edge] = !edgeOn[ch.dataset.edge];
+    renderChips(); applyFilters(); reheat(0.6);
+  }));
+}
+
+document.getElementById("legend").innerHTML = `
+  <i><span class="sw dep"></span> deployed service</i>
+  <i><span class="sw undep"></span> catalog only</i>
+  <i><span class="sw feat"></span> featured</i>
+  <i><span class="sw nok"></span> needs attention</i>
+  <i><span class="ln uses"></span> uses</i>
+  <i><span class="ln eco"></span> ecosystem</i>
+  <i><span class="ln fwd"></span> forwards</i>
+  <i><span class="ln repo"></span> shared repo</i>`;
+
+/* ---------- bootstrap ---------- */
+function setStatus(kind, text) {
+  document.getElementById("status").className = "status " + kind;
+  document.getElementById("statusText").textContent = text;
+}
+
+function load(projects, services, keepPositions) {
+  const keep = keepPositions && G ? new Map(G.nodes.map(n => [n.key, { x: n.x, y: n.y }])) : null;
+  G = buildGraph(projects, services);
+  seedPositions(G, keep);
+  renderChips();
+  applyFilters();
+  alpha = 1;
+}
+
+load(PROJECTS, typeof SERVICES !== "undefined" ? SERVICES : [], false);
+setStatus("snap", "snapshot");
+resize();
+for (let i = 0; i < 220; i++) tick();     // settle before the first paint
+fit();
+reheat(0.5);
+
+/* ?focus=<service|ecosystem> deep link, used by the list view's cards */
+const focusName = new URLSearchParams(location.search).get("focus");
+if (focusName) {
+  const n = G.byKey.get("s:" + norm(focusName)) || G.byKey.get("e:" + norm(focusName));
+  if (n && n.vis) { select(n); center(n); }
+  else { document.getElementById("q").value = focusName; state.q = focusName.toLowerCase(); draw(); }
+}
+
+loadLive().then(({ projects, services }) => {
+  if (!projects.length) { setStatus("snap", "snapshot"); return; }
+  const selKey = sel && sel.key;
+  load(projects, services || (typeof SERVICES !== "undefined" ? SERVICES : []), true);
+  if (selKey && G.byKey.get(selKey)) select(G.byKey.get(selKey)); else select(null);
+  reheat(0.6);
+  setStatus("live", "live · synced with sheet");
+}).catch(() => setStatus("snap", "snapshot (offline)"));
+
+/* ---------- controls ---------- */
+window.addEventListener("resize", () => { resize(); fit(); });
+document.getElementById("fit").addEventListener("click", () => fit());
+document.getElementById("shake").addEventListener("click", () => {
+  seedPositions(G, null); applyFilters(); alpha = 1; reheat(1);
+  setTimeout(() => fit(), 900);
+});
+
+const q = document.getElementById("q");
+q.addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); draw(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== q) { e.preventDefault(); q.focus(); }
+  if (e.key === "Escape") {
+    if (state.q) { q.value = ""; state.q = ""; q.blur(); draw(); }
+    else select(null);
+  }
+});
+</script>
+</body>
+</html>

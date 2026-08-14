@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Regenerate the embedded data snapshot inside index.html.
+"""Regenerate the embedded data snapshot inside the views.
 
-Two published Google Sheet tabs feed the page:
+Two published Google Sheet tabs feed the pages:
   * gid=0          -> the deployed-domains list (status = "deployed")
   * gid=554397184  -> the services catalog (type / subtype / repo / description …)
 
 The browser joins them on the service name; this script just bakes a snapshot
-of both tabs into index.html (between the DATA:START / DATA:END markers) as a
-fallback for when the sheets are unreachable. The page also live-fetches both
+of both tabs into every view (between the DATA:START / DATA:END markers) as a
+fallback for when the sheets are unreachable. The pages also live-fetch both
 tabs on load.
 
 Usage:
@@ -27,7 +27,8 @@ BASE = ("https://docs.google.com/spreadsheets/d/e/"
         "/pub?gid={gid}&single=true&output=csv")
 DEPLOYED_URL = BASE.format(gid="0")
 CATALOG_URL = BASE.format(gid="554397184")
-HTML = Path(__file__).with_name("index.html")
+HERE = Path(__file__).parent
+VIEWS = [HERE / "index.html", HERE / "graph.html"]   # every page carrying the DATA markers
 
 
 def load_csv(url, local=None):
@@ -100,10 +101,16 @@ def main():
         f"const SERVICES = {json.dumps(services, ensure_ascii=False, indent=2)};\n"
         "/* DATA:END */"
     )
-    html = HTML.read_text(encoding="utf-8")
-    html = re.sub(r"/\* DATA:START \*/.*?/\* DATA:END \*/", lambda _: block, html, flags=re.DOTALL)
-    HTML.write_text(html, encoding="utf-8")
-    print(f"Wrote {len(projects)} deployed projects + {len(services)} catalog services into {HTML.name}")
+    written = []
+    for view in VIEWS:
+        html = view.read_text(encoding="utf-8")
+        html, n = re.subn(r"/\* DATA:START \*/.*?/\* DATA:END \*/", lambda _: block, html, flags=re.DOTALL)
+        if not n:
+            raise SystemExit(f"{view.name}: DATA:START / DATA:END markers not found")
+        view.write_text(html, encoding="utf-8")
+        written.append(view.name)
+    print(f"Wrote {len(projects)} deployed projects + {len(services)} catalog services "
+          f"into {', '.join(written)}")
 
 
 if __name__ == "__main__":
