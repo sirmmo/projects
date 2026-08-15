@@ -148,6 +148,18 @@ const PROJECTS = [
   },
   {
     "name": "",
+    "domain": "openwinemap.org",
+    "ecosystem": "Demo tech",
+    "service": "OHM",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
     "domain": "swpatterns.com",
     "ecosystem": "Demo tech",
     "service": "SoftwarePatterns",
@@ -198,7 +210,7 @@ const PROJECTS = [
     "name": "",
     "domain": "lcars.fantasymaps.org",
     "ecosystem": "FantasyMaps",
-    "service": "OFM",
+    "service": "OFM, LCARS OFM Chrome",
     "be": "",
     "fe": "Server",
     "others": "",
@@ -222,7 +234,7 @@ const PROJECTS = [
     "name": "",
     "domain": "pipboy.fantasymaps.org",
     "ecosystem": "FantasyMaps",
-    "service": "OFM",
+    "service": "OFM, Pipboy OFM Chrome",
     "be": "",
     "fe": "Netlify",
     "others": "",
@@ -234,7 +246,7 @@ const PROJECTS = [
     "name": "",
     "domain": "stellarcartography.org",
     "ecosystem": "FantasyMaps",
-    "service": "OFM",
+    "service": "OFM, StellarCartography, LCARS OFM Chrome, Archaeo Pro",
     "be": "--",
     "fe": "Netlify",
     "others": "",
@@ -270,7 +282,7 @@ const PROJECTS = [
     "name": "",
     "domain": "www.fantasymaps.org/maplibre-grid/",
     "ecosystem": "FantasyMaps",
-    "service": "ofm-mlgrid",
+    "service": "maplibre-grid",
     "be": "",
     "fe": "GH Pages",
     "others": "",
@@ -474,7 +486,7 @@ const PROJECTS = [
     "name": "",
     "domain": "ministry.ofdata.org",
     "ecosystem": "Newsroom",
-    "service": "newsroom",
+    "service": "ministry of data",
     "be": "",
     "fe": "",
     "others": "",
@@ -486,7 +498,7 @@ const PROJECTS = [
     "name": "",
     "domain": "mcp.rpg-schema.org",
     "ecosystem": "OntoRAG",
-    "service": "ontorag mcp",
+    "service": "ontorag mcp, RPG-Schema",
     "be": "Vercel",
     "fe": "--",
     "others": "",
@@ -498,7 +510,7 @@ const PROJECTS = [
     "name": "",
     "domain": "mcp.tcg-schema.org",
     "ecosystem": "OntoRAG",
-    "service": "ontorag mcp",
+    "service": "ontorag mcp, TCG-Schema",
     "be": "Vercel",
     "fe": "--",
     "others": "",
@@ -738,7 +750,7 @@ const PROJECTS = [
     "name": "",
     "domain": "rpg-schema.org",
     "ecosystem": "RPG-schema",
-    "service": "OntoRAG",
+    "service": "OntoRAG, RPG-Schema",
     "be": "--",
     "fe": "GH Pages",
     "others": "",
@@ -750,7 +762,7 @@ const PROJECTS = [
     "name": "",
     "domain": "sirmmo.itch.io",
     "ecosystem": "RPG-schema",
-    "service": "Vespri, Genova, Poseidonia, Foafp",
+    "service": "Vespri, Genova, La Corona di Poseidonia, Figures of a Future Past, Whudunnit S&V, OntoRAG",
     "be": "",
     "fe": "",
     "others": "",
@@ -774,7 +786,7 @@ const PROJECTS = [
     "name": "",
     "domain": "tcg-schema.org",
     "ecosystem": "TCG-schema",
-    "service": "OntoRAG",
+    "service": "OntoRAG, TCG-Schema",
     "be": "--",
     "fe": "GH Pages",
     "others": "",
@@ -807,7 +819,7 @@ const SERVICES = [
     "type": "SPA, Backend, Blog",
     "subtype": "",
     "package": "",
-    "uses": "OHM",
+    "uses": "OHM, GeoMQTT, BadgeCollector, maplibre-grid",
     "repo": "https://github.com/FantasyMaps",
     "description": ""
   },
@@ -816,7 +828,7 @@ const SERVICES = [
     "type": "SPA, Backend, Blog",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "BadgeCollector",
     "repo": "https://github.com/openhistorymap",
     "description": ""
   },
@@ -906,7 +918,7 @@ const SERVICES = [
     "type": "SPA, Backend",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OHM, LCARS OFM Chrome, geocontext",
     "repo": "",
     "description": ""
   },
@@ -1015,7 +1027,7 @@ const SERVICES = [
     "subtype": "npm",
     "package": "@openfantasymap/maplibre-grid",
     "uses": "",
-    "repo": "",
+    "repo": "http://www.fantasymaps.org/maplibre-grid/",
     "description": ""
   },
   {
@@ -1059,7 +1071,7 @@ const SERVICES = [
     "type": "Webfront",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "TCG-Schema",
     "repo": "https://github.com/openfantasymap/cardsapi.designer",
     "description": ""
   },
@@ -1068,7 +1080,7 @@ const SERVICES = [
     "type": "",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OntoRAG",
     "repo": "",
     "description": ""
   },
@@ -1077,7 +1089,7 @@ const SERVICES = [
     "type": "RPG Manual",
     "subtype": "itch.io",
     "package": "https://sirmmo.itch.io/vespri-1282",
-    "uses": "OHM",
+    "uses": "OHM, RPG-Schema",
     "repo": "https://github.com/sirmmo/palermo_1282",
     "description": ""
   },
@@ -1086,25 +1098,25 @@ const SERVICES = [
     "type": "RPG Manual",
     "subtype": "itch.io",
     "package": "https://sirmmo.itch.io/genova-1507",
-    "uses": "OHM",
+    "uses": "OHM, RPG-Schema",
     "repo": "https://github.com/sirmmo/genova-1507",
     "description": ""
   },
   {
-    "name": "Poseidonia",
+    "name": "La Corona di Poseidonia",
     "type": "RPG Manual",
     "subtype": "itch.io",
     "package": "https://sirmmo.itch.io/la-corona-di-poseidonia",
-    "uses": "OHM",
+    "uses": "OHM, RPG-Schema",
     "repo": "",
     "description": ""
   },
   {
-    "name": "Foafp",
+    "name": "Figures of a Future Past",
     "type": "RPG Manual",
     "subtype": "itch.io",
     "package": "https://sirmmo.itch.io/figures-of-a-future-past",
-    "uses": "OFM",
+    "uses": "OFM, RPG-Schema",
     "repo": "https://github.com/sirmmo/figures_of_a_future_past",
     "description": ""
   },
@@ -1113,7 +1125,7 @@ const SERVICES = [
     "type": "RPG Manual",
     "subtype": "itch.io",
     "package": "https://sirmmo.itch.io/ecb-ludic-anomaly-division",
-    "uses": "",
+    "uses": "Justplay Home, RPG-Schema",
     "repo": "https://github.com/sirmmo/ecb-ludic-anomaly-division",
     "description": ""
   },
@@ -1208,20 +1220,11 @@ const SERVICES = [
     "description": ""
   },
   {
-    "name": "ofm-mlgrid",
-    "type": "Library",
-    "subtype": "npm",
-    "package": "http://www.fantasymaps.org/maplibre-grid/",
-    "uses": "",
-    "repo": "",
-    "description": ""
-  },
-  {
     "name": "hgtfs",
     "type": "Webfront",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "",
     "description": ""
   },
@@ -1248,7 +1251,7 @@ const SERVICES = [
     "type": "RPG Manual",
     "subtype": "itch.io",
     "package": "",
-    "uses": "OFM",
+    "uses": "OFM, RPG-Schema",
     "repo": "",
     "description": ""
   },
@@ -1447,6 +1450,60 @@ const SERVICES = [
     "subtype": "",
     "package": "",
     "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "ministry of data",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "Hugo Tools",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "RPG-Schema",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "OntoRAG",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "TCG-Schema",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "OntoRAG",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "LCARS OFM Chrome",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "OFM",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Pipboy OFM Chrome",
+    "type": "Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "OFM",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "StellarCartography",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "OFM, LCARS OFM Chrome",
     "repo": "",
     "description": ""
   }
