@@ -312,6 +312,18 @@ const PROJECTS = [
   },
   {
     "name": "",
+    "domain": "www.fantasymaps.org/amol-ontorag",
+    "ecosystem": "FantasyMaps",
+    "service": "AMOL-ontorag",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
     "domain": "www.fantasymaps.org/geomqtt/?url=wss%3A%2F%2Fgeomqtt.fantasymaps.org%2Fmqtt&set=iss",
     "ecosystem": "FantasyMaps",
     "service": "GeoMQTT",
@@ -854,7 +866,7 @@ const SERVICES = [
     "type": "SPA, Backend",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "",
     "description": ""
   },
@@ -908,7 +920,7 @@ const SERVICES = [
     "type": "Blog",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "Hugo Tools",
     "repo": "",
     "description": ""
   },
@@ -917,7 +929,7 @@ const SERVICES = [
     "type": "Blog",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "Hugo Tools",
     "repo": "",
     "description": ""
   },
@@ -940,11 +952,11 @@ const SERVICES = [
     "description": "dimmi che repo hai starrato e ti dirò chi sei"
   },
   {
-    "name": "newsroom",
+    "name": "Newsroom",
     "type": "SPA, Backend",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OntoRAG",
     "repo": "",
     "description": ""
   },
@@ -953,7 +965,7 @@ const SERVICES = [
     "type": "SPA, Backend",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OFM, RPG-Schema, RPG-Schema Vault",
     "repo": "",
     "description": ""
   },
@@ -1034,16 +1046,34 @@ const SERVICES = [
     "type": "",
     "subtype": "",
     "package": "",
-    "uses": "GeoMQTT, geobard, inspector, AI Proxy",
+    "uses": "GeoMQTT, geobard, inspector, AI Proxy, OFM, OHM",
     "repo": "",
     "description": ""
   },
   {
     "name": "GeoMQTT",
-    "type": "Backend, Library",
-    "subtype": "npm, Unity",
+    "type": "Backend",
+    "subtype": "",
     "package": "",
     "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "GeoMQTT-Maplibre",
+    "type": "Library",
+    "subtype": "npm",
+    "package": "@openfantasymap/geomqtt-maplibre",
+    "uses": "GeoMQTT",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "GeoMQTT-leaflet",
+    "type": "Library",
+    "subtype": "npm",
+    "package": "@openfantasymap/geomqtt-leaflet",
+    "uses": "GeoMQTT",
     "repo": "",
     "description": ""
   },
@@ -1052,7 +1082,7 @@ const SERVICES = [
     "type": "Webfront",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OHM, OntoRAG",
     "repo": "https://github.com/openhistorymap/openculturmap",
     "description": ""
   },
@@ -1061,7 +1091,7 @@ const SERVICES = [
     "type": "Webfront",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OHM, OntoRAG",
     "repo": "",
     "description": ""
   },
@@ -1079,7 +1109,7 @@ const SERVICES = [
     "type": "Webfront",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "",
     "description": ""
   },
@@ -1088,7 +1118,7 @@ const SERVICES = [
     "type": "Webfront",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "",
     "description": ""
   },
@@ -1097,7 +1127,7 @@ const SERVICES = [
     "type": "Webfront",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "",
     "description": ""
   },
@@ -1106,7 +1136,7 @@ const SERVICES = [
     "type": "Webfront",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "",
     "description": ""
   },
@@ -1304,7 +1334,7 @@ const SERVICES = [
     "type": "Library",
     "subtype": "pypy",
     "package": "",
-    "uses": "",
+    "uses": "GaiaWM",
     "repo": "",
     "description": ""
   },
@@ -1313,7 +1343,7 @@ const SERVICES = [
     "type": "Desktop",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "GaiaWM",
     "repo": "",
     "description": ""
   },
@@ -1349,7 +1379,7 @@ const SERVICES = [
     "type": "SPA, Backend",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "OntoRAG",
     "repo": "",
     "description": ""
   },
@@ -1358,7 +1388,7 @@ const SERVICES = [
     "type": "",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "",
     "description": ""
   },
@@ -1367,7 +1397,7 @@ const SERVICES = [
     "type": "",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "OHM",
     "repo": "",
     "description": ""
   },
@@ -1376,7 +1406,7 @@ const SERVICES = [
     "type": "",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "Hugo Tools",
     "repo": "",
     "description": ""
   },
@@ -1385,7 +1415,7 @@ const SERVICES = [
     "type": "",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "Hugo Tools",
     "repo": "",
     "description": ""
   },
@@ -1394,7 +1424,7 @@ const SERVICES = [
     "type": "",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "Hugo Tools",
     "repo": "",
     "description": ""
   },
@@ -1403,7 +1433,7 @@ const SERVICES = [
     "type": "",
     "subtype": "gh page",
     "package": "",
-    "uses": "",
+    "uses": "OHM, hgtfs viewer",
     "repo": "",
     "description": ""
   },
@@ -1548,6 +1578,42 @@ const SERVICES = [
     "subtype": "",
     "package": "",
     "uses": "OFM, LCARS OFM Chrome",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "AMOL-ontorag",
+    "type": "Webfront, Library",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "OntoRAG, RPG-Schema",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "Grounder",
+    "type": "Backend, Webfront",
+    "subtype": "gh page",
+    "package": "",
+    "uses": "newsroom, OntoRAG",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "RPG-Schema Vault",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "OntoRAG, RPG-Schema",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "holobook",
+    "type": "",
+    "subtype": "",
+    "package": "",
+    "uses": "holodocker",
     "repo": "",
     "description": ""
   }
