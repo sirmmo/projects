@@ -112,6 +112,42 @@
 const PROJECTS = [
   {
     "name": "",
+    "domain": "https://ingmmo.com/needle-openai",
+    "ecosystem": "AI Demo Tech",
+    "service": "needle-openai wrapper",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://ingmmo.com/openai-maple/",
+    "ecosystem": "AI Demo Tech",
+    "service": "openai-maple",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
+    "domain": "https://ingmmo.com/openai-MobileMoE/",
+    "ecosystem": "AI Demo Tech",
+    "service": "openai-mobileMoE",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
     "domain": "badgecollector.org",
     "ecosystem": "BadgeCollector",
     "service": "BadgeCollector",
@@ -141,54 +177,6 @@ const PROJECTS = [
     "service": "drivelite",
     "be": "",
     "fe": "GH Pages",
-    "others": "",
-    "forward": "",
-    "attention": "ok",
-    "featured": ""
-  },
-  {
-    "name": "",
-    "domain": "https://ingmmo.com/needle-openai",
-    "ecosystem": "Demo tech",
-    "service": "needle-openai wrapper",
-    "be": "",
-    "fe": "GH Pages",
-    "others": "",
-    "forward": "",
-    "attention": "ok",
-    "featured": ""
-  },
-  {
-    "name": "",
-    "domain": "https://ingmmo.com/openai-MobileMoE/",
-    "ecosystem": "Demo tech",
-    "service": "openai-mobileMoE",
-    "be": "",
-    "fe": "GH Pages",
-    "others": "",
-    "forward": "",
-    "attention": "ok",
-    "featured": ""
-  },
-  {
-    "name": "",
-    "domain": "openwinemap.org",
-    "ecosystem": "Demo tech",
-    "service": "OHM",
-    "be": "--",
-    "fe": "GH Pages",
-    "others": "",
-    "forward": "",
-    "attention": "ok",
-    "featured": ""
-  },
-  {
-    "name": "",
-    "domain": "swpatterns.com",
-    "ecosystem": "Demo tech",
-    "service": "SoftwarePatterns",
-    "be": "--",
-    "fe": "Netlify",
     "others": "",
     "forward": "",
     "attention": "ok",
@@ -472,6 +460,18 @@ const PROJECTS = [
   },
   {
     "name": "",
+    "domain": "openwinemap.org",
+    "ecosystem": "GIS Tech",
+    "service": "OHM",
+    "be": "--",
+    "fe": "GH Pages",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "",
     "domain": "hgtfs.github.io",
     "ecosystem": "HGTFS",
     "service": "hgtfs",
@@ -505,6 +505,18 @@ const PROJECTS = [
     "forward": "",
     "attention": "ok",
     "featured": "yes"
+  },
+  {
+    "name": "",
+    "domain": "swpatterns.com",
+    "ecosystem": "Hugo Tools",
+    "service": "SoftwarePatterns",
+    "be": "--",
+    "fe": "Netlify",
+    "others": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
   },
   {
     "name": "",
@@ -942,7 +954,7 @@ const SERVICES = [
     "type": "SPA, Backend, Blog",
     "subtype": "",
     "package": "",
-    "uses": "",
+    "uses": "openai-mobileMoE, openai-maple, OpenGolfMap, needle-openai wrapper, AI Proxy",
     "repo": "https://github.com/ontorag",
     "description": ""
   },
@@ -1419,7 +1431,7 @@ const SERVICES = [
     "type": "SPA, Backend",
     "subtype": "",
     "package": "",
-    "uses": "OntoRAG, openai-mobileMoE",
+    "uses": "OntoRAG, openai-mobileMoE, openai-maple",
     "repo": "",
     "description": ""
   },
@@ -1705,7 +1717,16 @@ const SERVICES = [
   {
     "name": "openai-mobileMoE",
     "type": "Library, Docker",
-    "subtype": "docker",
+    "subtype": "docker, pypy",
+    "package": "",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "openai-maple",
+    "type": "Library, Docker",
+    "subtype": "docker, pypy",
     "package": "",
     "uses": "",
     "repo": "",
