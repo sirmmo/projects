@@ -102,7 +102,8 @@
 <footer class="wrap">
   <span id="footCount"></span> ·
   Sources: <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv" target="_blank" rel="noopener">deployed domains</a> +
-  <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv" target="_blank" rel="noopener">services catalog</a>,
+  <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv" target="_blank" rel="noopener">services catalog</a> +
+  <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=1984372056&single=true&output=csv" target="_blank" rel="noopener">instances</a>,
   joined by service name · rows with <span class="mono">status = deployed</span>.
 </footer>
 
@@ -1891,10 +1892,43 @@ const SERVICES = [
     "description": ""
   }
 ];
+const INSTANCES = [
+  {
+    "project": "OFM",
+    "name": "Rock of Bral",
+    "url": "",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Toril",
+    "url": "",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Silent Hill",
+    "url": "",
+    "franchise": "Silent Hill"
+  },
+  {
+    "project": "OFM",
+    "name": "Star Trek Galaxy",
+    "url": "",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Warhammer 40K",
+    "url": "",
+    "franchise": "Warhammer"
+  }
+];
 /* DATA:END */
 
 const state = { q: "", eco: null, attn: false, type: null, featured: false };
-let DATA = enrich(PROJECTS, typeof SERVICES !== "undefined" ? SERVICES : []);
+let DATA = enrich(PROJECTS, typeof SERVICES !== "undefined" ? SERVICES : [],
+                  typeof INSTANCES !== "undefined" ? INSTANCES : []);
 const ECO_LABEL = e => e || "Other";
 const GRAPH_SVG = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.6 5.9 11 3.4M4.7 8.3l6.1 3.6M13 5.5v4.6"/><circle cx="3" cy="7.4" r="2.1" fill="currentColor" stroke="none"/><circle cx="12.6" cy="3" r="1.7" fill="currentColor" stroke="none"/><circle cx="12.6" cy="12.6" r="1.7" fill="currentColor" stroke="none"/></svg>`;
 
@@ -1906,7 +1940,8 @@ function matches(p) {
   if (state.q) {
     const hay = [p.name, p.domain, p.service, p.ecosystems.join(" "), p.be, p.fe, p.others, p.forward,
       p.description, p.types.join(" "), p.subtypes.join(" "), p.uses.join(" "),
-      p.packages.join(" "), p.repos.join(" ")].join(" ").toLowerCase();
+      p.packages.join(" "), p.repos.join(" "),
+      p.instances.map(i => i.name + " " + i.franchise).join(" ")].join(" ").toLowerCase();
     if (!state.q.split(/\s+/).every(t => hay.includes(t))) return false;
   }
   return true;
@@ -1983,6 +2018,7 @@ function cardHTML(p) {
   if (!badges.length) badges.push(`<span class="badge ext">live</span>`);
   const fwd = p.forward ? `<div class="fwd">→ forwards to <span class="mono">${ESC(p.forward)}</span></div>` : "";
   const uses = p.uses.length ? `<div class="uses"><b>uses</b> ${p.uses.map(ESC).join(", ")}</div>` : "";
+  const inst = instancesHTML(p.instances);
   const graphLink = `<a class="repo" href="graph.html?focus=${encodeURIComponent(splitList(p.service)[0] || p.domain)}" title="Show in the graph view">${GRAPH_SVG}graph</a>`;
   const links = p.repos.map(r => `<a class="repo" href="${ESC(r)}" target="_blank" rel="noopener" title="${ESC(r)}">${GH_SVG}${ESC(repoLabel(r))}</a>`)
     .concat(p.packages.map(pkgHTML));
@@ -2001,8 +2037,22 @@ function cardHTML(p) {
     ${fwd}
     <div class="badges">${badges.join("")}</div>
     ${uses}
+    ${inst}
     ${foot}
   </div>`;
+}
+
+/* The instances a service hosts (OFM's worlds, say). A handful are named
+   inline and the rest are left to the count — a card is not a directory. */
+const INST_SHOWN = 4;
+function instancesHTML(list) {
+  if (!list || !list.length) return "";
+  const shown = list.slice(0, INST_SHOWN).map(i => i.url
+    ? `<a class="ilink" href="${ESC(i.url)}" target="_blank" rel="noopener" title="${ESC(i.url)}">${ESC(i.name)}</a>`
+    : ESC(i.name)).join(", ");
+  const rest = list.length - INST_SHOWN;
+  return `<div class="uses"><b>${list.length} instance${list.length === 1 ? "" : "s"}</b> ${shown}${
+    rest > 0 ? ` <span class="more">+${rest} more</span>` : ""}</div>`;
 }
 
 function sectionHTML(title, items, cls) {
@@ -2048,9 +2098,10 @@ setStatus("snap", "snapshot");
 render();
 
 /* live refresh: fetch both tabs and join them in the browser */
-loadLive().then(({ projects, services }) => {
+loadLive().then(({ projects, services, instances }) => {
   if (!projects.length) { setStatus("snap", "snapshot"); return; }
-  DATA = enrich(projects, services || (typeof SERVICES !== "undefined" ? SERVICES : []));
+  DATA = enrich(projects, services || (typeof SERVICES !== "undefined" ? SERVICES : []),
+                instances || (typeof INSTANCES !== "undefined" ? INSTANCES : []));
   render();
   setStatus("live", "live · synced with sheet");
 }).catch(() => setStatus("snap", "snapshot (offline)"));

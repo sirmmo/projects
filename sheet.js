@@ -1,8 +1,8 @@
 /* Sheet loading shared by index.html (list view) and graph.html (graph view).
  *
- * Both pages embed a snapshot of the two sheet tabs (PROJECTS / SERVICES,
- * written between the DATA markers by build.py), paint from it immediately,
- * then call loadLive() to refresh from the published sheet.
+ * Both pages embed a snapshot of the three sheet tabs (PROJECTS / SERVICES /
+ * INSTANCES, written between the DATA markers by build.py), paint from it
+ * immediately, then call loadLive() to refresh from the published sheet.
  *
  * The CSV column names below mirror build.py's parsers — a sheet schema change
  * has to be made in both places.
@@ -10,6 +10,7 @@
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv";
 const CATALOG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv";
+const INSTANCES_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=1984372056&single=true&output=csv";
 
 /* ---- small shared helpers ---- */
 const norm = s => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -39,8 +40,27 @@ function servicesFor(p, idx) {
   return svcs;
 }
 
-function enrich(projects, services) {
+/* Instances are the named things a service hosts — OFM's worlds, say — filed
+   under the service name in the `Project` column. */
+function instanceIndex(instances) {
+  const idx = {};
+  (instances || []).forEach(i => {
+    if (!i.project) return;
+    const k = norm(i.project);
+    (idx[k] = idx[k] || []).push(i);
+  });
+  return idx;
+}
+
+/* Every instance of every service a deployed row runs. */
+function instancesFor(p, iidx, svcs) {
+  const keys = uniq(svcs.map(s => norm(s.name)).concat(splitList(p.service).map(norm)));
+  return keys.flatMap(k => iidx[k] || []);
+}
+
+function enrich(projects, services, instances) {
   const idx = serviceIndex(services);
+  const iidx = instanceIndex(instances);
   return projects.map(p => {
     const svcs = servicesFor(p, idx);
     return Object.assign({}, p, {
@@ -55,6 +75,7 @@ function enrich(projects, services) {
       // The catalog files every service under an `ecosistema` of its own, which
       // can differ from the ecosystem the domain is deployed in.
       ecosystems: uniq([p.ecosystem].concat(svcs.flatMap(s => splitList(s.ecosystem))).filter(Boolean)),
+      instances: instancesFor(p, iidx, svcs),
     });
   });
 }
@@ -125,16 +146,36 @@ function csvToServices(text) {
   return out;
 }
 
-/* Fetch both tabs. Resolves with the deployed rows plus the catalog (null when
-   the catalog tab is unreachable — callers fall back to the embedded snapshot).
-   Rejects only if the deployed tab itself fails. */
+function csvToInstances(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) return [];
+  const head = rows[0].map(h => h.trim());
+  const idx = name => head.indexOf(name);
+  const c = { proj: idx("Project"), name: idx("Name"), url: idx("url"), fran: idx("franchise") };
+  const g = (r, k) => (k >= 0 && r[k] != null ? r[k].trim() : "");
+  const out = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!g(row, c.name)) continue;
+    out.push({ project: g(row, c.proj), name: g(row, c.name),
+      url: g(row, c.url), franchise: g(row, c.fran) });
+  }
+  return out;
+}
+
+/* Fetch all three tabs. Resolves with the deployed rows plus the catalog and
+   the instances (null when those tabs are unreachable — callers fall back to
+   the embedded snapshot). Rejects only if the deployed tab itself fails. */
 function loadLive() {
+  const soft = url => fetch(url, { cache: "no-store" }).then(r => r.ok ? r.text() : "").catch(() => "");
   return Promise.all([
     fetch(CSV_URL, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }),
-    fetch(CATALOG_URL, { cache: "no-store" }).then(r => r.ok ? r.text() : "").catch(() => ""),
-  ]).then(([pText, sText]) => ({
+    soft(CATALOG_URL),
+    soft(INSTANCES_URL),
+  ]).then(([pText, sText, iText]) => ({
     projects: csvToProjects(pText),
     services: sText ? csvToServices(sText) : null,
+    instances: iText ? csvToInstances(iText) : null,
   }));
 }
 

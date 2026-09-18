@@ -156,6 +156,18 @@ kbd { font-size: 11px; color: var(--txt-faint); border: 1px solid var(--line); b
   border: 1px solid var(--line); background: var(--bg-soft);
 }
 a.repo:hover { color: var(--txt); border-color: var(--accent); }
+
+/* ---- instances (the named things a service hosts) ---- */
+/* z-index clears the card's full-bleed overlay link, as .repo does */
+.ilink { position: relative; z-index: 2; color: var(--txt-dim); }
+a.ilink { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 2px; }
+a.ilink:hover { color: var(--accent); text-decoration-color: currentColor; }
+.uses .more { color: var(--txt-faint); }
+.inst { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 9px;
+  border: 1px solid var(--line-soft); background: var(--bg-soft); }
+.inst .ifran { font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--txt-dim); }
+.inst .ifran .n { font-size: 10.5px; color: var(--txt-faint); font-weight: 500; }
+.inst .ilist { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; }
 .repo svg { flex: none; }
 /* a package that is only a name (npm, a docker image) — nothing to link to */
 span.repo.pkg { color: var(--txt-faint); cursor: default; }

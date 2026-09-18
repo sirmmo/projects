@@ -14,8 +14,8 @@ library + vanilla browser JS only — keep it that way.
 ## Commands
 
 ```bash
-python3 build.py                          # refetch both sheet tabs, rewrite the embedded snapshots
-python3 build.py deployed.csv catalog.csv # same, from local CSVs (offline)
+python3 build.py                          # refetch all three sheet tabs, rewrite the embedded snapshots
+python3 build.py deployed.csv catalog.csv data/ofm-worlds.csv   # same, from local CSVs (offline)
 python3 -m http.server                    # preview at http://localhost:8000
 ```
 
@@ -28,12 +28,13 @@ node --check /tmp/x.js
 
 ## The data model
 
-Two tabs of one published sheet, joined **in the browser** on the service name:
+Three tabs of one published sheet, joined **in the browser** on the service name:
 
 | Tab | Rows | Key columns |
 | --- | --- | --- |
 | `gid=0` — deployed domains | one per deployed domain | `e` (display name), `dominio`, `ecosystem`, `servizio`, `BE hosting`, `FE hosting`, `others`, `status`, `forward to`, `attention`, `featured`, `description` |
 | `gid=554397184` — services catalog | one per service | `Servizio`, `type`, `subtype`, `package`, `ecosistema`, `uses`, `Repo`, `Descrizione` |
+| `gid=1984372056` — instances | one per instance a service hosts | `Project`, `Name`, `url`, `franchise` |
 
 Things that will bite you:
 
@@ -56,17 +57,24 @@ Things that will bite you:
   fallback to a catalog entry named after the domain. `servizio` may be a
   comma-separated list — one domain can run several services.
 - `--` is a "not set" placeholder throughout, filtered out by `splitList()`.
+- Instances are the named things a service hosts — OFM's worlds, say. They join
+  on `Project` → service name, so they belong to the *service*, and every domain
+  running that service shows them. `url` is often blank; render the name as
+  plain text then. `data/ofm-worlds.csv` is a seed for that tab, scraped from
+  the live OFM world list.
 
-**The schema is parsed twice**: `build.py` (`clean_projects` / `clean_services`)
-for the snapshot, and `sheet.js` (`csvToProjects` / `csvToServices`) for the live
-fetch. A sheet column change means editing both.
+**The schema is parsed twice**: `build.py` (`clean_projects` / `clean_services` /
+`clean_instances`) for the snapshot, and `sheet.js` (`csvToProjects` /
+`csvToServices` / `csvToInstances`) for the live fetch. A sheet column change
+means editing both.
 
 ## Architecture
 
 Three layers of freshness, by design:
 
-1. Each view boots from an **embedded snapshot** — `PROJECTS` and `SERVICES`
-   literals between the `/* DATA:START */` and `/* DATA:END */` markers — so the
+1. Each view boots from an **embedded snapshot** — `PROJECTS`, `SERVICES` and
+   `INSTANCES` literals between the `/* DATA:START */` and `/* DATA:END */`
+   markers — so the
    page renders instantly and still works with the sheet unreachable.
 2. It then calls `loadLive()` and re-renders from the sheet, flipping the header
    status pill from *snapshot* to *live*.

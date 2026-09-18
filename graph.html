@@ -1935,6 +1935,38 @@ const SERVICES = [
     "description": ""
   }
 ];
+const INSTANCES = [
+  {
+    "project": "OFM",
+    "name": "Rock of Bral",
+    "url": "",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Toril",
+    "url": "",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Silent Hill",
+    "url": "",
+    "franchise": "Silent Hill"
+  },
+  {
+    "project": "OFM",
+    "name": "Star Trek Galaxy",
+    "url": "",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Warhammer 40K",
+    "url": "",
+    "franchise": "Warhammer"
+  }
+];
 /* DATA:END */
 
 /* ============================================================
@@ -1951,7 +1983,7 @@ const SERVICES = [
      fwd   service -> service   (deployed row's `forward to`, matched on domain)
      repo  service -- service   (two services sharing one repository)
    ============================================================ */
-function buildGraph(projects, services) {
+function buildGraph(projects, services, instances) {
   const nodes = [];
   const byKey = new Map();
 
@@ -1960,7 +1992,8 @@ function buildGraph(projects, services) {
     let n = byKey.get(key);
     if (!n) {
       n = { key, kind: "svc", name, types: [], subtypes: [], pkg: "", repo: "", desc: "", depDesc: "",
-            uses: [], deploys: [], ecos: [], catEcos: [], domains: [], deployed: false, featured: false, nok: false };
+            uses: [], deploys: [], ecos: [], catEcos: [], domains: [], instances: [],
+            deployed: false, featured: false, nok: false };
       nodes.push(n); byKey.set(key, n);
     }
     return n;
@@ -1977,6 +2010,10 @@ function buildGraph(projects, services) {
     n.repo = n.repo || s.repo;
     n.desc = n.desc || s.description;
   });
+
+  // Instances (OFM's worlds, say) are filed under the service name.
+  const iidx = instanceIndex(instances);
+  nodes.filter(n => n.kind === "svc").forEach(n => { n.instances = iidx[norm(n.name)] || []; });
 
   // Attach deployed rows. One row can run several services (comma-separated).
   const idx = serviceIndex(services);
@@ -2004,6 +2041,7 @@ function buildGraph(projects, services) {
   nodes.filter(n => n.kind === "svc").forEach(n => {
     n.ecos = uniq(n.ecos.concat(n.catEcos));
     n.desc = n.depDesc || n.desc;          // the deployed row describes it best now
+    if (!n.instances.length) n.instances = iidx[norm(n.name)] || [];
   });
 
   // Ecosystem hubs. Hues are spread by the golden angle over the sorted list so
@@ -2225,7 +2263,8 @@ function applyFilters() {
 }
 
 const haystack = n => [n.name, n.desc, n.pkg, n.repo, n.domains.join(" "), n.ecos.join(" "),
-  n.types.join(" "), n.subtypes.join(" "), n.deploys.map(p => p.name).join(" ")].join(" ").toLowerCase();
+  n.types.join(" "), n.subtypes.join(" "), n.deploys.map(p => p.name).join(" "),
+  n.instances.map(i => i.name + " " + i.franchise).join(" ")].join(" ").toLowerCase();
 function isMatch(n) {
   if (!state.q) return true;
   if (n.kind === "eco") return n.name.toLowerCase().includes(state.q);
@@ -2511,7 +2550,9 @@ function showTip(n, px, py) {
   if (!n) { tipEl.classList.remove("on"); return; }
   const sub = n.kind === "eco"
     ? `${n.members} service${n.members === 1 ? "" : "s"}`
-    : [domainLabel(n.domains[0]), n.types.join(" · "), n.deployed ? "" : "not deployed"].filter(Boolean).join(" · ");
+    : [domainLabel(n.domains[0]), n.types.join(" · "),
+       n.instances.length ? `${n.instances.length} instances` : "",
+       n.deployed ? "" : "not deployed"].filter(Boolean).join(" · ");
   tipEl.innerHTML = `<div>${ESC(n.name)}</div>` + (sub ? `<div class="t2">${ESC(sub)}</div>` : "");
   tipEl.style.left = px + "px";
   tipEl.style.top = py + "px";
@@ -2539,6 +2580,27 @@ function center(n) {
 function relBtns(list) {
   return list.map(n => `<button data-go="${ESC(n.key)}">${ESC(n.name)}</button>`).join("");
 }
+/* The panel has room to list every instance, grouped by franchise so a service
+   with dozens of them still reads as something with a shape. */
+function instancesSection(list) {
+  if (!list || !list.length) return "";
+  const groups = new Map();
+  list.forEach(i => {
+    const k = i.franchise || "Other";
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(i);
+  });
+  const rows = [...groups.entries()]
+    .sort((a, b) => (a[0] === "Other") - (b[0] === "Other") || a[0].toLowerCase().localeCompare(b[0].toLowerCase()))
+    .map(([fran, items]) => `<div class="inst">
+      <div class="ifran">${ESC(fran)} <span class="n">${items.length}</span></div>
+      <div class="ilist">${items.map(i => i.url
+        ? `<a class="ilink" href="${ESC(i.url)}" target="_blank" rel="noopener" title="${ESC(i.url)}">${ESC(i.name)}</a>`
+        : `<span class="ilink">${ESC(i.name)}</span>`).join("")}</div>
+    </div>`).join("");
+  return `<section><span class="lbl">Instances · ${list.length}</span>${rows}</section>`;
+}
+
 function svcPanel(n) {
   const usesN = G.links.filter(l => l.kind === "uses" && l.s === n).map(l => l.t);
   const usedBy = G.links.filter(l => l.kind === "uses" && l.t === n).map(l => l.s);
@@ -2574,6 +2636,7 @@ function svcPanel(n) {
     ${usesN.length ? `<section><span class="lbl">Uses</span><div class="rel">${relBtns(usesN)}</div></section>` : ""}
     ${usedBy.length ? `<section><span class="lbl">Used by</span><div class="rel">${relBtns(usedBy)}</div></section>` : ""}
     ${fwd.length ? `<section><span class="lbl">Forwards to</span><div class="rel">${relBtns(fwd)}</div></section>` : ""}
+    ${instancesSection(n.instances)}
     ${n.repo || n.pkg ? `<div class="linkrow">
       ${n.repo ? `<a class="repo" href="${ESC(n.repo)}" target="_blank" rel="noopener" title="${ESC(n.repo)}">${GH_SVG}${ESC(repoLabel(n.repo))}</a>` : ""}
       ${n.pkg ? pkgHTML(n.pkg) : ""}</div>` : ""}
@@ -2658,9 +2721,9 @@ function setStatus(kind, text) {
   document.getElementById("statusText").textContent = text;
 }
 
-function load(projects, services, keepPositions) {
+function load(projects, services, instances, keepPositions) {
   const keep = keepPositions && G ? new Map(G.nodes.map(n => [n.key, { x: n.x, y: n.y }])) : null;
-  G = buildGraph(projects, services);
+  G = buildGraph(projects, services, instances);
   seedPositions(G, keep);
   renderLegend();
   renderChips();
@@ -2668,7 +2731,8 @@ function load(projects, services, keepPositions) {
   alpha = 1;
 }
 
-load(PROJECTS, typeof SERVICES !== "undefined" ? SERVICES : [], false);
+load(PROJECTS, typeof SERVICES !== "undefined" ? SERVICES : [],
+     typeof INSTANCES !== "undefined" ? INSTANCES : [], false);
 setStatus("snap", "snapshot");
 resize();
 for (let i = 0; i < 220; i++) tick();     // settle before the first paint
@@ -2683,10 +2747,11 @@ if (focusName) {
   else { document.getElementById("q").value = focusName; state.q = focusName.toLowerCase(); draw(); }
 }
 
-loadLive().then(({ projects, services }) => {
+loadLive().then(({ projects, services, instances }) => {
   if (!projects.length) { setStatus("snap", "snapshot"); return; }
   const selKey = sel && sel.key;
-  load(projects, services || (typeof SERVICES !== "undefined" ? SERVICES : []), true);
+  load(projects, services || (typeof SERVICES !== "undefined" ? SERVICES : []),
+       instances || (typeof INSTANCES !== "undefined" ? INSTANCES : []), true);
   if (selKey && G.byKey.get(selKey)) select(G.byKey.get(selKey)); else select(null);
   reheat(0.6);
   setStatus("live", "live · synced with sheet");

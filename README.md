@@ -49,12 +49,13 @@ The two views deep-link into each other — a card's *graph* link opens
 
 ## How it stays current
 
-Two tabs of the published Google Sheet feed the page:
+Three tabs of the published Google Sheet feed the page:
 
 | Tab | What it provides |
 | --- | --- |
 | [`gid=0`](https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv) | deployed domains (`status = deployed`), name, hosting, ecosystem, description |
 | [`gid=554397184`](https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv) | services catalog — `type`, `subtype`, `package`, `ecosistema`, `uses`, `Repo`, `Descrizione` |
+| [`gid=1984372056`](https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=1984372056&single=true&output=csv) | instances a service hosts — `Project`, `Name`, `url`, `franchise` |
 
 The page joins them in the browser on the service name (case/punctuation
 insensitive; a domain-name fallback and multi-service entries are handled), so a

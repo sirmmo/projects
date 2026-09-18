@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """Regenerate the embedded data snapshot inside the views.
 
-Two published Google Sheet tabs feed the pages:
+Three published Google Sheet tabs feed the pages:
   * gid=0          -> the deployed-domains list (status = "deployed")
   * gid=554397184  -> the services catalog (type / subtype / ecosistema / repo …)
+  * gid=1984372056 -> the instances a service hosts (OFM's worlds, say)
 
 The browser joins them on the service name; this script just bakes a snapshot
-of both tabs into every view (between the DATA:START / DATA:END markers) as a
-fallback for when the sheets are unreachable. The pages also live-fetch both
-tabs on load.
+of all three tabs into every view (between the DATA:START / DATA:END markers)
+as a fallback for when the sheets are unreachable. The pages also live-fetch
+all three tabs on load.
 
 Usage:
-    python3 build.py                         # fetch both tabs live
-    python3 build.py deployed.csv catalog.csv # build from local CSV files
+    python3 build.py                                    # fetch all three tabs live
+    python3 build.py deployed.csv catalog.csv worlds.csv # build from local CSV files
 """
 import csv
 import io
@@ -27,6 +28,7 @@ BASE = ("https://docs.google.com/spreadsheets/d/e/"
         "/pub?gid={gid}&single=true&output=csv")
 DEPLOYED_URL = BASE.format(gid="0")
 CATALOG_URL = BASE.format(gid="554397184")
+INSTANCES_URL = BASE.format(gid="1984372056")
 HERE = Path(__file__).parent
 VIEWS = [HERE / "index.html", HERE / "graph.html"]   # every page carrying the DATA markers
 
@@ -96,14 +98,34 @@ def clean_services(rows):
     return out
 
 
+def clean_instances(rows):
+    """The named things a service hosts, filed under the service name in the
+    `Project` column -- OFM's worlds, say."""
+    out = []
+    for r in rows:
+        g = lambda k: (r.get(k) or "").strip()
+        if not g("Name"):
+            continue
+        out.append({
+            "project": g("Project"),
+            "name": g("Name"),
+            "url": g("url"),
+            "franchise": g("franchise"),
+        })
+    out.sort(key=lambda x: (x["project"].lower(), x["franchise"].lower() or "zzz", x["name"].lower()))
+    return out
+
+
 def main():
     a = sys.argv
     projects = clean_projects(load_csv(DEPLOYED_URL, a[1] if len(a) > 1 else None))
     services = clean_services(load_csv(CATALOG_URL, a[2] if len(a) > 2 else None))
+    instances = clean_instances(load_csv(INSTANCES_URL, a[3] if len(a) > 3 else None))
     block = (
         "/* DATA:START */\n"
         f"const PROJECTS = {json.dumps(projects, ensure_ascii=False, indent=2)};\n"
         f"const SERVICES = {json.dumps(services, ensure_ascii=False, indent=2)};\n"
+        f"const INSTANCES = {json.dumps(instances, ensure_ascii=False, indent=2)};\n"
         "/* DATA:END */"
     )
     written = []
@@ -115,7 +137,7 @@ def main():
         view.write_text(html, encoding="utf-8")
         written.append(view.name)
     print(f"Wrote {len(projects)} deployed projects + {len(services)} catalog services "
-          f"into {', '.join(written)}")
+          f"+ {len(instances)} instances into {', '.join(written)}")
 
 
 if __name__ == "__main__":
