@@ -107,14 +107,25 @@ view only. Accepts `?q=` to preseed the search.
 `buildGraph()` turns the same rows into a graph whose **nodes are services**
 (the `uses` column connects service names, so services — not domains — are the
 natural node) enriched with the deployed rows running them. Ecosystem hub nodes
-are synthesised, otherwise most of the graph would be isolated vertices. Edge
-kinds: `uses`, `eco`, `fwd`, `repo`.
+are synthesised, otherwise most of the graph would be isolated vertices, and
+each row of the instances tab becomes a leaf off the service hosting it. Three
+node kinds — `svc`, `eco`, `inst` — and five edge kinds: `uses`, `eco`, `fwd`,
+`repo`, `hosts`.
 
 - Layout is a plain O(n²) spring/charge simulation (~90 nodes, so no quadtree).
   `alpha` cools per tick; `reheat()` restarts the rAF loop.
 - Initial positions come from a **seeded PRNG** (`mulberry32`) — the same graph
   every load. Hubs are seeded before services, because services are placed
-  relative to their hub.
+  relative to their hub, and instances last of all, relative to their host.
+- Instances ride along with their host: `visible()` defers to it, `applyFilters()`
+  recomputes them *after* every adjustment to the services, and the `instances`
+  edge chip (`edgeOn.hosts`) hides the nodes as well as the edges — they have no
+  meaning without the service. `hosts` and `eco` edges say where a node belongs
+  rather than what it depends on, so neither counts towards `deg`, which would
+  otherwise balloon the one service that hosts dozens of them.
+- Two instances can share a display name (OFM lists "Toril" twice at different
+  urls), so `instKey()` keys them on name *and* url. `svcPanel()` builds its
+  jump buttons with the same helper — they have to agree or the buttons go dead.
 - Services with no edge at all carry no relational information and are parked on
   an ellipse by `placeLoose()` instead of being simulated.
 - Shapes draw in world space; **all text draws in screen space** at a fixed size,

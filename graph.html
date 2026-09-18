@@ -30,11 +30,13 @@
   .legend .sw.undep { background: transparent; border: 1.5px dashed #6b7488; }
   .legend .sw.feat { background: #ffcf5a; box-shadow: 0 0 0 2px rgba(255,207,90,.3); }
   .legend .sw.nok { background: var(--warn); }
+  .legend .sw.inst { width: 9px; height: 9px; border-radius: 2px; transform: rotate(45deg); background: #6ea8fe; opacity: .65; }
   .legend .ln { width: 20px; height: 0; border-top: 2px solid; flex: none; }
   .legend .ln.uses { border-color: #6ea8fe; }
   .legend .ln.eco { border-color: #7c5cff; opacity: .55; }
   .legend .ln.fwd { border-top-style: dashed; border-color: var(--warn); }
   .legend .ln.repo { border-top-style: dotted; border-color: var(--ok); }
+  .legend .ln.hosts { border-color: #6ea8fe; opacity: .4; }
   .tools { display: flex; gap: 8px; align-items: center; }
   .tools button {
     font: inherit; font-size: 12.5px; color: var(--txt-dim); cursor: pointer;
@@ -1938,33 +1940,267 @@ const SERVICES = [
 const INSTANCES = [
   {
     "project": "OFM",
-    "name": "Rock of Bral",
-    "url": "",
+    "name": "Alien",
+    "url": "https://map.fantasymaps.org/alien",
+    "franchise": "Alien"
+  },
+  {
+    "project": "OFM",
+    "name": "Alien - Sol - IX",
+    "url": "https://map.fantasymaps.org/alien-sol-ix",
+    "franchise": "Alien"
+  },
+  {
+    "project": "OFM",
+    "name": "Blade Runner RPG",
+    "url": "https://map.fantasymaps.org/blade_runner",
+    "franchise": "Blade Runner"
+  },
+  {
+    "project": "OFM",
+    "name": "Doskvol",
+    "url": "https://map.fantasymaps.org/doskvol",
+    "franchise": "Blades in the Dark"
+  },
+  {
+    "project": "OFM",
+    "name": "Coriolis",
+    "url": "https://map.fantasymaps.org/coriolis",
+    "franchise": "Coriolis"
+  },
+  {
+    "project": "OFM",
+    "name": "Coriolis Starship",
+    "url": "https://map.fantasymaps.org/coriolis-kua-iv-i",
+    "franchise": "Coriolis"
+  },
+  {
+    "project": "OFM",
+    "name": "Cyberpunk 2077",
+    "url": "https://map.fantasymaps.org/cyberpunk",
+    "franchise": "Cyberpunk"
+  },
+  {
+    "project": "OFM",
+    "name": "Barovia",
+    "url": "https://map.fantasymaps.org/barovia2",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Eberron",
+    "url": "https://map.fantasymaps.org/eberron2",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Krynn",
+    "url": "https://map.fantasymaps.org/krynn",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Realmspace",
+    "url": "https://map.fantasymaps.org/flow-realmspace",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Rock of Bral - Lower side",
+    "url": "https://map.fantasymaps.org/rock_of_bral_lower",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Rock of Bral - Upper side",
+    "url": "https://map.fantasymaps.org/rock_of_bral_upper",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Rock of Bral - Upper side (Open World)",
+    "url": "https://map.fantasymaps.org/rock_of_bral_upper-openworld",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "Spelljammer Flow",
+    "url": "https://map.fantasymaps.org/flow",
     "franchise": "D&D"
   },
   {
     "project": "OFM",
     "name": "Toril",
-    "url": "",
+    "url": "https://map.fantasymaps.org/toril",
     "franchise": "D&D"
   },
   {
     "project": "OFM",
+    "name": "Toril",
+    "url": "https://map.fantasymaps.org/toril_2",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM",
+    "name": "discworld",
+    "url": "https://map.fantasymaps.org/discworld",
+    "franchise": "Discworld"
+  },
+  {
+    "project": "OFM",
+    "name": "Dune",
+    "url": "https://map.fantasymaps.org/dune",
+    "franchise": "Dune"
+  },
+  {
+    "project": "OFM",
+    "name": "dune-arrakis",
+    "url": "https://map.fantasymaps.org/dune-arrakis",
+    "franchise": "Dune"
+  },
+  {
+    "project": "OFM",
+    "name": "Fallout",
+    "url": "https://map.fantasymaps.org/fallout",
+    "franchise": "Fallout"
+  },
+  {
+    "project": "OFM",
+    "name": "Bave",
+    "url": "https://map.fantasymaps.org/1673286506217",
+    "franchise": "Homebrew"
+  },
+  {
+    "project": "OFM",
+    "name": "Bouletland",
+    "url": "https://map.fantasymaps.org/1673269691392",
+    "franchise": "Homebrew"
+  },
+  {
+    "project": "OFM",
+    "name": "Eisinland",
+    "url": "https://map.fantasymaps.org/1673347745872",
+    "franchise": "Homebrew"
+  },
+  {
+    "project": "OFM",
+    "name": "Huia",
+    "url": "https://map.fantasymaps.org/1673100874758",
+    "franchise": "Homebrew"
+  },
+  {
+    "project": "OFM",
+    "name": "Lanerynes",
+    "url": "https://map.fantasymaps.org/1673194637669",
+    "franchise": "Homebrew"
+  },
+  {
+    "project": "OFM",
+    "name": "Luxastra Adventures",
+    "url": "https://map.fantasymaps.org/luxastra",
+    "franchise": "Homebrew"
+  },
+  {
+    "project": "OFM",
+    "name": "Middle Earth",
+    "url": "https://map.fantasymaps.org/middle-earth",
+    "franchise": "Middle-earth"
+  },
+  {
+    "project": "OFM",
     "name": "Silent Hill",
-    "url": "",
+    "url": "https://map.fantasymaps.org/silent_hill",
     "franchise": "Silent Hill"
   },
   {
     "project": "OFM",
-    "name": "Star Trek Galaxy",
-    "url": "",
+    "name": "Star Trek Adventures",
+    "url": "https://map.fantasymaps.org/sta",
     "franchise": "Star Trek"
   },
   {
     "project": "OFM",
+    "name": "Star Trek Adventures - Bajor",
+    "url": "https://map.fantasymaps.org/sta-bajor",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Star Trek Adventures - Sol - III - I (Moon)",
+    "url": "https://map.fantasymaps.org/sta-sol-iii-i",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Star Trek Adventures - Sol - IV (Mars)",
+    "url": "https://map.fantasymaps.org/sta-sol-iv",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Star Trek Adventures - Sol - IX (Pluto)",
+    "url": "https://map.fantasymaps.org/sta-sol-ix",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Star Trek Adventures - Sol star system",
+    "url": "https://map.fantasymaps.org/sta-sol",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Star Trek Adventures - Wolf 359",
+    "url": "https://map.fantasymaps.org/sta-wolf%20359",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Starfleet - Deep Space 9",
+    "url": "https://map.fantasymaps.org/starfleet-ds9",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Starfleet - Defiant Class",
+    "url": "https://map.fantasymaps.org/starfleet-defiant",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Starfleet - NX Class",
+    "url": "https://map.fantasymaps.org/starfleet-nx",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OFM",
+    "name": "Star Wars Galaxy",
+    "url": "https://map.fantasymaps.org/sw",
+    "franchise": "Star Wars"
+  },
+  {
+    "project": "OFM",
+    "name": "edworld",
+    "url": "https://map.fantasymaps.org/test_edway",
+    "franchise": "Test"
+  },
+  {
+    "project": "OFM",
+    "name": "Valheim - Seed Xc2ACXKUBU",
+    "url": "https://map.fantasymaps.org/vh_Xc2ACXKUBU",
+    "franchise": "Valheim"
+  },
+  {
+    "project": "OFM",
     "name": "Warhammer 40K",
-    "url": "",
+    "url": "https://map.fantasymaps.org/wh4k",
     "franchise": "Warhammer"
+  },
+  {
+    "project": "OFM",
+    "name": "Zelda Breath of the Wild",
+    "url": "https://map.fantasymaps.org/zelda-botw",
+    "franchise": "Zelda"
   }
 ];
 /* DATA:END */
@@ -1975,14 +2211,19 @@ const INSTANCES = [
    Nodes are catalog services (the `uses` column connects them by name),
    enriched with the deployed rows that run them; services with no deployed
    domain stay in as "not deployed" nodes. Ecosystem hubs are synthesised so
-   that the many services with no dependency edge still have somewhere to sit.
+   that the many services with no dependency edge still have somewhere to sit,
+   and each instance a service hosts (OFM's worlds) is a leaf off that service.
 
    Edges:
      uses  service -> service   (catalog `uses`)
      eco   service -> ecosystem (deployed row's `ecosystem` + catalog `ecosistema`)
      fwd   service -> service   (deployed row's `forward to`, matched on domain)
      repo  service -- service   (two services sharing one repository)
+     hosts service -> instance  (instances tab, joined on `Project`)
    ============================================================ */
+const instKey = (hostName, i) =>
+  "i:" + norm(hostName) + ":" + norm(i.name) + (i.url ? ":" + norm(i.url) : "");
+
 function buildGraph(projects, services, instances) {
   const nodes = [];
   const byKey = new Map();
@@ -2091,12 +2332,27 @@ function buildGraph(projects, services, instances) {
     for (let i = 1; i < group.length; i++) link(group[i - 1], group[i], "repo");
   });
 
+  // Instances hang off the service that hosts them, one leaf each.
+  nodes.filter(n => n.kind === "svc").forEach(n => {
+    n.instances.forEach(i => {
+      const key = instKey(n.name, i);
+      if (byKey.get(key)) return;
+      const m = { key, kind: "inst", name: i.name, url: i.url,
+                  franchise: i.franchise, host: n, hue: null };
+      nodes.push(m); byKey.set(key, m);
+      link(n, m, "hosts");
+    });
+  });
+
   // A service takes the colour of its (first) ecosystem.
   nodes.forEach(n => {
     if (n.kind === "svc") n.hue = n.ecos.length && hueOf[n.ecos[0]] != null ? hueOf[n.ecos[0]] : null;
     n.deg = 0;
   });
-  links.forEach(l => { if (l.kind !== "eco") { l.s.deg++; l.t.deg++; } });
+  nodes.forEach(n => { if (n.kind === "inst") n.hue = n.host.hue; });
+  // `eco` and `hosts` say where a node belongs, not what it depends on, so
+  // neither counts towards the degree that sizes a node.
+  links.forEach(l => { if (l.kind !== "eco" && l.kind !== "hosts") { l.s.deg++; l.t.deg++; } });
 
   // An entry with neither an ecosystem nor a dependency carries no relational
   // information — it is parked on a ring instead of joining the simulation,
@@ -2104,6 +2360,7 @@ function buildGraph(projects, services, instances) {
   const linked = new Set();
   links.forEach(l => { linked.add(l.s); linked.add(l.t); });
   nodes.forEach(n => { n.loose = n.kind === "svc" && !linked.has(n); });
+  // An instance is never loose — it always has its host.
 
   return { nodes, links, byKey };
 }
@@ -2146,6 +2403,17 @@ function seedPositions(G, keep) {
       place(n, Math.cos(b) * 640, Math.sin(b) * 640);
     }
   });
+
+  // Instances last, in a tight ring around the host that is now placed — a
+  // service with dozens of them must not fling the simulation apart on tick 1.
+  const seq = new Map();
+  G.nodes.filter(n => n.kind === "inst").forEach(n => {
+    const i = seq.get(n.host.key) || 0;
+    seq.set(n.host.key, i + 1);
+    if (kept(n)) return;
+    const a = (i / Math.max(n.host.instances.length, 1)) * Math.PI * 2;
+    place(n, n.host.x + Math.cos(a) * 62, n.host.y + Math.sin(a) * 62);
+  });
 }
 
 /* ---------- force simulation (small graph, plain O(n²) repulsion) ---------- */
@@ -2154,8 +2422,9 @@ const SPRING = {
   uses: { len: 178, k: 0.032 },
   fwd:  { len: 130, k: 0.028 },
   repo: { len: 92,  k: 0.020 },
+  hosts:{ len: 58,  k: 0.055 },      // short and stiff: instances cling to their host
 };
-const CHARGE = { eco: 9000, svc: 2100 };
+const CHARGE = { eco: 9000, svc: 2100, inst: 260 };
 
 let alpha = 1;
 const reheat = (v = 0.75) => { alpha = Math.max(alpha, v); if (!raf) raf = requestAnimationFrame(frame); };
@@ -2226,12 +2495,13 @@ const tipEl = document.getElementById("tip");
 const panel = document.getElementById("panel");
 const view = { s: 1, x: 0, y: 0 };            // screen = world * s + (x, y)
 const state = { q: "", eco: null, attn: false, featured: false, undeployed: false };
-const edgeOn = { uses: true, eco: true, fwd: true, repo: true };
+const edgeOn = { uses: true, eco: true, fwd: true, repo: true, hosts: true };
 let G, hover = null, sel = null, dragging = null, raf = null, W = 0, H = 0, dpr = 1;
 
 const toWorld = (px, py) => [(px - view.x) / view.s, (py - view.y) / view.s];
 
 function visible(n) {
+  if (n.kind === "inst") return edgeOn.hosts && visible(n.host);
   if (n.kind === "eco") return state.eco === null ? !state.undeployed : n.name === state.eco;
   if (state.undeployed && n.deployed) return false;
   if (state.featured && !n.featured) return false;
@@ -2256,18 +2526,26 @@ function applyFilters() {
   G.links.forEach(l => { if (l.kind === "eco" && l.s.vis) populated.add(l.t); });
   G.nodes.forEach(n => { if (n.kind === "eco" && !populated.has(n)) n.vis = false; });
 
+  // Recomputed after every adjustment above, so an instance always agrees with
+  // whatever its host ended up as.
+  G.nodes.forEach(n => { if (n.kind === "inst") n.vis = edgeOn.hosts && n.host.vis; });
+
   G.links.forEach(l => { l.vis = edgeOn[l.kind] && l.s.vis && l.t.vis; });
+  const nInst = G.nodes.filter(n => n.vis && n.kind === "inst").length;
   document.getElementById("count").textContent =
     `${G.nodes.filter(n => n.vis && n.kind === "svc").length} services · ` +
-    `${G.links.filter(l => l.vis && l.kind !== "eco").length} connections`;
+    (nInst ? `${nInst} instance${nInst === 1 ? "" : "s"} · ` : "") +
+    `${G.links.filter(l => l.vis && l.kind !== "eco" && l.kind !== "hosts").length} connections`;
 }
 
 const haystack = n => [n.name, n.desc, n.pkg, n.repo, n.domains.join(" "), n.ecos.join(" "),
   n.types.join(" "), n.subtypes.join(" "), n.deploys.map(p => p.name).join(" "),
   n.instances.map(i => i.name + " " + i.franchise).join(" ")].join(" ").toLowerCase();
+const instHay = n => [n.name, n.franchise, n.host.name].join(" ").toLowerCase();
 function isMatch(n) {
   if (!state.q) return true;
   if (n.kind === "eco") return n.name.toLowerCase().includes(state.q);
+  if (n.kind === "inst") return state.q.split(/\s+/).every(t => instHay(n).includes(t));
   return state.q.split(/\s+/).every(t => haystack(n).includes(t));
 }
 
@@ -2285,7 +2563,9 @@ function focusSet() {
    space at a fixed size, so labels stay readable at any zoom level. Node radii
    have a screen-space floor for the same reason — hit testing uses the same
    function, so the two stay in agreement. */
-const nodeR = n => Math.max(6 + 3.1 * Math.sqrt(n.deg) + (n.deployed ? 2 : 0), 5.5 / view.s);
+const nodeR = n => n.kind === "inst"
+  ? Math.max(4.4, 3.4 / view.s)
+  : Math.max(6 + 3.1 * Math.sqrt(n.deg) + (n.deployed ? 2 : 0), 5.5 / view.s);
 const toScreen = n => [n.x * view.s + view.x, n.y * view.s + view.y];
 const px = v => v / view.s;                       // screen pixels -> world units
 const LABEL_FONT = "12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif";
@@ -2321,6 +2601,8 @@ function draw() {
     if (l.kind === "eco")       { ctx.strokeStyle = `hsla(${hue},60%,62%,.20)`; ctx.lineWidth = px(1.1); }
     else if (l.kind === "uses") { ctx.strokeStyle = "rgba(126,178,255,.62)";    ctx.lineWidth = px(1.7); }
     else if (l.kind === "fwd")  { ctx.strokeStyle = "rgba(255,180,84,.7)";      ctx.lineWidth = px(1.6); }
+    else if (l.kind === "hosts"){ ctx.strokeStyle = l.t.hue === null ? "rgba(150,160,185,.28)"
+                                    : `hsla(${l.t.hue},50%,62%,.32)`;           ctx.lineWidth = px(1); }
     else                        { ctx.strokeStyle = "rgba(67,211,158,.5)";      ctx.lineWidth = px(1.4); }
     ctx.beginPath();
     ctx.moveTo(l.s.x, l.s.y);
@@ -2330,6 +2612,13 @@ function draw() {
     if (l.kind === "uses" || l.kind === "fwd") arrow(l);
   });
   ctx.globalAlpha = 1;
+
+  /* instances first, so a service always sits on top of its own leaves */
+  G.nodes.forEach(n => {
+    if (!n.vis || n.kind !== "inst") return;
+    ctx.globalAlpha = dim(n) ? 0.14 : 1;
+    drawInst(n);
+  });
 
   /* service nodes (world space) */
   G.nodes.forEach(n => {
@@ -2356,9 +2645,10 @@ function drawLabels(dim) {
     placed.push(drawHub(n));
   });
 
-  const rank = n => (n === hover || n === sel ? 0 : n.featured ? 1 : n.deg ? 2 : n.deployed ? 3 : 4);
-  const svc = G.nodes.filter(n => n.vis && n.kind === "svc" && !dim(n))
-    .sort((a, b) => rank(a) - rank(b) || b.deg - a.deg || a.name.localeCompare(b.name));
+  const rank = n => n === hover || n === sel ? 0
+    : n.kind === "inst" ? 5 : n.featured ? 1 : n.deg ? 2 : n.deployed ? 3 : 4;
+  const svc = G.nodes.filter(n => n.vis && n.kind !== "eco" && !dim(n))
+    .sort((a, b) => rank(a) - rank(b) || (b.deg || 0) - (a.deg || 0) || a.name.localeCompare(b.name));
 
   ctx.globalAlpha = 1;
   ctx.font = LABEL_FONT;
@@ -2373,7 +2663,7 @@ function drawLabels(dim) {
     ctx.lineJoin = "round";
     ctx.strokeStyle = "rgba(12,14,20,.85)"; ctx.lineWidth = 3.5;
     ctx.strokeText(n.name, sx, y, 150);
-    ctx.fillStyle = n.deployed ? "#cfd6e6" : "#7d8598";
+    ctx.fillStyle = n.kind === "inst" ? "#8d95a8" : n.deployed ? "#cfd6e6" : "#7d8598";
     ctx.fillText(n.name, sx, y, 150);
     placed.push(box);
   });
@@ -2412,6 +2702,25 @@ function drawHub(n) {
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText(n.name, sx, sy + .5);
   return { x0: sx - w / 2, x1: sx + w / 2, y0: sy - h / 2, y1: sy + h / 2 };
+}
+
+/* Instances are small diamonds in their host's colour — a different shape so
+   they never read as another service at a glance. */
+function drawInst(n) {
+  const r = nodeR(n);
+  ctx.beginPath();
+  ctx.moveTo(n.x, n.y - r); ctx.lineTo(n.x + r, n.y);
+  ctx.lineTo(n.x, n.y + r); ctx.lineTo(n.x - r, n.y);
+  ctx.closePath();
+  ctx.fillStyle = n.hue === null ? "rgba(120,130,155,.40)" : `hsla(${n.hue},45%,55%,.60)`;
+  ctx.fill();
+  ctx.strokeStyle = n.hue === null ? "rgba(150,160,185,.55)" : `hsla(${n.hue},62%,72%,.80)`;
+  ctx.lineWidth = px(1);
+  ctx.stroke();
+  if (n === sel || n === hover) {
+    ctx.beginPath(); ctx.arc(n.x, n.y, r + px(4), 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(231,234,243,.85)"; ctx.lineWidth = px(1.3); ctx.stroke();
+  }
 }
 
 function drawSvc(n) {
@@ -2533,7 +2842,8 @@ cv.addEventListener("pointerleave", () => { hover = null; tipEl.classList.remove
 cv.addEventListener("dblclick", e => {
   const rect = cv.getBoundingClientRect();
   const n = nodeAt(e.clientX - rect.left, e.clientY - rect.top);
-  if (n && n.kind === "svc" && n.domains.length) window.open(domainURL(n.domains[0]), "_blank", "noopener");
+  if (n && n.kind === "inst" && n.url) window.open(n.url, "_blank", "noopener");
+  else if (n && n.kind === "svc" && n.domains.length) window.open(domainURL(n.domains[0]), "_blank", "noopener");
 });
 cv.addEventListener("wheel", e => {
   e.preventDefault();
@@ -2550,6 +2860,8 @@ function showTip(n, px, py) {
   if (!n) { tipEl.classList.remove("on"); return; }
   const sub = n.kind === "eco"
     ? `${n.members} service${n.members === 1 ? "" : "s"}`
+    : n.kind === "inst"
+    ? [n.franchise, "instance of " + n.host.name].filter(Boolean).join(" · ")
     : [domainLabel(n.domains[0]), n.types.join(" · "),
        n.instances.length ? `${n.instances.length} instances` : "",
        n.deployed ? "" : "not deployed"].filter(Boolean).join(" · ");
@@ -2564,7 +2876,7 @@ function select(n) {
   sel = n;
   if (!n) { panel.classList.remove("open"); draw(); return; }
   panel.className = "panel open" + (n.kind === "svc" && n.featured ? " feat" : "");
-  panel.innerHTML = n.kind === "eco" ? hubPanel(n) : svcPanel(n);
+  panel.innerHTML = n.kind === "eco" ? hubPanel(n) : n.kind === "inst" ? instPanel(n) : svcPanel(n);
   panel.scrollTop = 0;
   panel.querySelector(".close").addEventListener("click", () => select(null));
   panel.querySelectorAll("[data-go]").forEach(b =>
@@ -2582,7 +2894,7 @@ function relBtns(list) {
 }
 /* The panel has room to list every instance, grouped by franchise so a service
    with dozens of them still reads as something with a shape. */
-function instancesSection(list) {
+function instancesSection(list, hostName) {
   if (!list || !list.length) return "";
   const groups = new Map();
   list.forEach(i => {
@@ -2594,9 +2906,8 @@ function instancesSection(list) {
     .sort((a, b) => (a[0] === "Other") - (b[0] === "Other") || a[0].toLowerCase().localeCompare(b[0].toLowerCase()))
     .map(([fran, items]) => `<div class="inst">
       <div class="ifran">${ESC(fran)} <span class="n">${items.length}</span></div>
-      <div class="ilist">${items.map(i => i.url
-        ? `<a class="ilink" href="${ESC(i.url)}" target="_blank" rel="noopener" title="${ESC(i.url)}">${ESC(i.name)}</a>`
-        : `<span class="ilink">${ESC(i.name)}</span>`).join("")}</div>
+      <div class="ilist">${items.map(i =>
+        `<button class="ilink" data-go="${ESC(instKey(hostName, i))}">${ESC(i.name)}</button>`).join("")}</div>
     </div>`).join("");
   return `<section><span class="lbl">Instances · ${list.length}</span>${rows}</section>`;
 }
@@ -2636,12 +2947,24 @@ function svcPanel(n) {
     ${usesN.length ? `<section><span class="lbl">Uses</span><div class="rel">${relBtns(usesN)}</div></section>` : ""}
     ${usedBy.length ? `<section><span class="lbl">Used by</span><div class="rel">${relBtns(usedBy)}</div></section>` : ""}
     ${fwd.length ? `<section><span class="lbl">Forwards to</span><div class="rel">${relBtns(fwd)}</div></section>` : ""}
-    ${instancesSection(n.instances)}
+    ${instancesSection(n.instances, n.name)}
     ${n.repo || n.pkg ? `<div class="linkrow">
       ${n.repo ? `<a class="repo" href="${ESC(n.repo)}" target="_blank" rel="noopener" title="${ESC(n.repo)}">${GH_SVG}${ESC(repoLabel(n.repo))}</a>` : ""}
       ${n.pkg ? pkgHTML(n.pkg) : ""}</div>` : ""}
     <a class="golist" href="./?q=${encodeURIComponent(n.name)}">Open in the list view →</a>`;
 }
+function instPanel(n) {
+  return `<div class="close" title="Close">✕</div>
+    <div>
+      <div class="eyebrow">Instance</div>
+      <h2>${ESC(n.name)}</h2>
+    </div>
+    ${n.franchise ? `<div class="meta"><b>${ESC(n.franchise)}</b></div>` : ""}
+    <section><span class="lbl">Hosted by</span><div class="rel">${relBtns([n.host])}</div></section>
+    ${n.url ? `<div class="linkrow"><a class="repo" href="${ESC(n.url)}" target="_blank" rel="noopener" title="${ESC(n.url)}">${ESC(domainLabel(n.url))} ↗</a></div>` : ""}
+    <a class="golist" href="./?q=${encodeURIComponent(n.host.name)}">Open ${ESC(n.host.name)} in the list view →</a>`;
+}
+
 function hubPanel(n) {
   const members = G.links.filter(l => l.kind === "eco" && l.t === n).map(l => l.s)
     .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
@@ -2657,7 +2980,8 @@ function hubPanel(n) {
 }
 
 /* ---------- chips ---------- */
-const EDGE_KINDS = [["uses", "uses"], ["eco", "ecosystem"], ["fwd", "forwards"], ["repo", "shared repo"]];
+const EDGE_KINDS = [["uses", "uses"], ["eco", "ecosystem"], ["fwd", "forwards"],
+  ["repo", "shared repo"], ["hosts", "instances"]];
 const present = k => G.links.some(l => l.kind === k);
 
 function renderChips() {
@@ -2709,6 +3033,7 @@ function renderLegend() {
   if (svc.some(n => !n.deployed)) items.push(`<i><span class="sw undep"></span> catalog only</i>`);
   if (svc.some(n => n.featured)) items.push(`<i><span class="sw feat"></span> featured</i>`);
   if (svc.some(n => n.nok)) items.push(`<i><span class="sw nok"></span> needs attention</i>`);
+  if (G.nodes.some(n => n.kind === "inst")) items.push(`<i><span class="sw inst"></span> instance</i>`);
   EDGE_KINDS.forEach(([k, label]) => {
     if (present(k)) items.push(`<i><span class="ln ${k}"></span> ${label}</i>`);
   });

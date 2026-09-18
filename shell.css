@@ -168,6 +168,10 @@ a.ilink:hover { color: var(--accent); text-decoration-color: currentColor; }
 .inst .ifran { font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--txt-dim); }
 .inst .ifran .n { font-size: 10.5px; color: var(--txt-faint); font-weight: 500; }
 .inst .ilist { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; }
+button.ilink { font: inherit; font-size: 12px; cursor: pointer; padding: 0; border: none;
+  background: none; color: var(--txt-dim); text-decoration: underline;
+  text-decoration-color: var(--line); text-underline-offset: 2px; }
+button.ilink:hover { color: var(--accent); text-decoration-color: currentColor; }
 .repo svg { flex: none; }
 /* a package that is only a name (npm, a docker image) — nothing to link to */
 span.repo.pkg { color: var(--txt-faint); cursor: default; }
