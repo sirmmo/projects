@@ -32,13 +32,25 @@ Two tabs of one published sheet, joined **in the browser** on the service name:
 
 | Tab | Rows | Key columns |
 | --- | --- | --- |
-| `gid=0` — deployed domains | one per deployed domain | `dominio`, `ecosystem`, `servizio`, `BE hosting`, `FE hosting`, `others`, `status`, `forward to`, `attention`, `featured` |
-| `gid=554397184` — services catalog | one per service | `Servizio`, `type`, `subtype`, `package`, `uses`, `Repo`, `Descrizione` |
+| `gid=0` — deployed domains | one per deployed domain | `e` (display name), `dominio`, `ecosystem`, `servizio`, `BE hosting`, `FE hosting`, `others`, `status`, `forward to`, `attention`, `featured`, `description` |
+| `gid=554397184` — services catalog | one per service | `Servizio`, `type`, `subtype`, `package`, `ecosistema`, `uses`, `Repo`, `Descrizione` |
 
 Things that will bite you:
 
-- Column names are **mixed Italian/English** and the display-name column has a
-  **blank header**, which the CSV export names `Column 1`. Both parsers special-case it.
+- Column names are **mixed Italian/English** and the display-name column keeps
+  moving: it is headed `e` today and used to be blank (exported as `Column 1`).
+  Both parsers take the first of `name` / `e` / `Column 1` that exists, and
+  deliberately ignore any other `Column N` — the sheet now uses one of those for
+  a reversed-domain sort key.
+- `dominio` is free text: a bare host, a host + path, or a whole URL down to the
+  query string. Link through `domainURL()`, print through `domainLabel()` —
+  never concatenate a scheme onto it.
+- Descriptions live on the **deployed row** (`description`); the catalog's
+  `Descrizione` is only the fallback for services described nowhere else.
+- Both tabs carry an ecosystem, and they disagree on purpose: `ecosystem` is the
+  one the *domain* is deployed in, `ecosistema` the one the *service* is filed
+  under. The graph unions them (deployment first, so it keeps the node colour);
+  the list view groups by the deployed row's.
 - Only rows with `status = deployed` are kept.
 - The join is on `norm(name)` (lowercased, non-alphanumerics stripped), with a
   fallback to a catalog entry named after the domain. `servizio` may be a

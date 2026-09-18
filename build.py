@@ -3,7 +3,7 @@
 
 Two published Google Sheet tabs feed the pages:
   * gid=0          -> the deployed-domains list (status = "deployed")
-  * gid=554397184  -> the services catalog (type / subtype / repo / description …)
+  * gid=554397184  -> the services catalog (type / subtype / ecosistema / repo …)
 
 The browser joins them on the service name; this script just bakes a snapshot
 of both tabs into every view (between the DATA:START / DATA:END markers) as a
@@ -41,13 +41,16 @@ def load_csv(url, local=None):
 
 
 def name_key(rows):
-    """The display-name column has a blank header (exported as 'Column 1');
-    prefer a real 'name' header if the sheet ever gets one."""
+    """The display-name column keeps moving: it is headed 'e' today, used to be
+    blank (exported as 'Column 1'), and 'name' is the obvious future. Take the
+    first of those that exists -- and never a bare 'Column N', which is now the
+    sheet's reversed-domain sort key."""
     keys = list(rows[0].keys()) if rows else []
-    for k in keys:
-        if (k or "").strip().lower() == "name":
-            return k
-    return "Column 1" if "Column 1" in keys else None
+    lower = {(k or "").strip().lower(): k for k in keys}
+    for want in ("name", "e", "column 1"):
+        if want in lower:
+            return lower[want]
+    return None
 
 
 def clean_projects(rows):
@@ -65,6 +68,7 @@ def clean_projects(rows):
             "be": g("BE hosting"),
             "fe": g("FE hosting"),
             "others": g("others"),
+            "description": g("description"),
             "forward": g("forward to"),
             "attention": g("attention"),
             "featured": g("featured"),
@@ -84,6 +88,7 @@ def clean_services(rows):
             "type": g("type"),
             "subtype": g("subtype"),
             "package": g("package"),
+            "ecosystem": g("ecosistema"),
             "uses": g("uses"),
             "repo": g("Repo"),
             "description": g("Descrizione"),

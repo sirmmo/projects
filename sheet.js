@@ -18,6 +18,12 @@ const uniq = a => [...new Set(a)];
 const isFeat = p => (p.featured || "").toLowerCase() === "yes";
 const ESC = s => (s || "").replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 
+/* `dominio` is free text: a bare host, a host + path, or a whole URL down to
+   the query string. Link through domainURL(), print through domainLabel() —
+   never concatenate a scheme onto it by hand. */
+const domainURL = d => { const v = (d || "").trim(); return /^https?:\/\//i.test(v) ? v : "https://" + v; };
+const domainLabel = d => (d || "").trim().replace(/^https?:\/\//i, "").replace(/\?.*$/, "").replace(/\/+$/, "");
+
 /* ---- join the deployed list with the services catalog ---- */
 function serviceIndex(services) {
   const idx = {};
@@ -43,7 +49,12 @@ function enrich(projects, services) {
       repos: uniq(svcs.map(s => s.repo).filter(Boolean)),
       uses: uniq(svcs.flatMap(s => splitList(s.uses))),
       packages: uniq(svcs.map(s => s.package).filter(Boolean)),
-      description: (svcs.map(s => s.description).find(Boolean)) || "",
+      // The deployed row carries its own description now; the catalog's
+      // Descrizione only still covers services described nowhere else.
+      description: p.description || svcs.map(s => s.description).find(Boolean) || "",
+      // The catalog files every service under an `ecosistema` of its own, which
+      // can differ from the ecosystem the domain is deployed in.
+      ecosystems: uniq([p.ecosystem].concat(svcs.flatMap(s => splitList(s.ecosystem))).filter(Boolean)),
     });
   });
 }
@@ -74,11 +85,14 @@ function csvToProjects(text) {
   if (!rows.length) return [];
   const head = rows[0].map(h => h.trim());
   const idx = name => head.indexOf(name);
-  // The display-name column has a blank header, exported as "Column 1".
-  let nameIdx = head.findIndex(h => h.toLowerCase() === "name");
-  if (nameIdx < 0) nameIdx = idx("Column 1");
+  // The display-name column keeps moving: it is headed "e" today, used to be
+  // blank (exported as "Column 1"), and "name" is the obvious future. Take the
+  // first of those that exists — and never a bare "Column N", which is now the
+  // sheet's reversed-domain sort key.
+  const nameIdx = ["name", "e", "column 1"].reduce(
+    (found, want) => found >= 0 ? found : head.findIndex(h => h.toLowerCase() === want), -1);
   const c = { name: nameIdx, dom: idx("dominio"), eco: idx("ecosystem"), svc: idx("servizio"),
-    be: idx("BE hosting"), fe: idx("FE hosting"), oth: idx("others"),
+    be: idx("BE hosting"), fe: idx("FE hosting"), oth: idx("others"), desc: idx("description"),
     st: idx("status"), fwd: idx("forward to"), att: idx("attention"), fea: idx("featured") };
   const g = (r, k) => (k >= 0 && r[k] != null ? r[k].trim() : "");
   const out = [];
@@ -86,7 +100,7 @@ function csvToProjects(text) {
     const row = rows[r];
     if (g(row, c.st).toLowerCase() !== "deployed") continue;
     out.push({ name: g(row, c.name), domain: g(row, c.dom), ecosystem: g(row, c.eco), service: g(row, c.svc),
-      be: g(row, c.be), fe: g(row, c.fe), others: g(row, c.oth),
+      be: g(row, c.be), fe: g(row, c.fe), others: g(row, c.oth), description: g(row, c.desc),
       forward: g(row, c.fwd), attention: g(row, c.att), featured: g(row, c.fea) });
   }
   out.sort((a, b) => (a.ecosystem.toLowerCase() || "zzz").localeCompare(b.ecosystem.toLowerCase() || "zzz") || a.domain.toLowerCase().localeCompare(b.domain.toLowerCase()));
@@ -98,15 +112,15 @@ function csvToServices(text) {
   if (!rows.length) return [];
   const head = rows[0].map(h => h.trim());
   const idx = name => head.indexOf(name);
-  const c = { name: idx("Servizio"), type: idx("type"), sub: idx("subtype"),
-    pkg: idx("package"), uses: idx("uses"), repo: idx("Repo"), desc: idx("Descrizione") };
+  const c = { name: idx("Servizio"), type: idx("type"), sub: idx("subtype"), pkg: idx("package"),
+    eco: idx("ecosistema"), uses: idx("uses"), repo: idx("Repo"), desc: idx("Descrizione") };
   const g = (r, k) => (k >= 0 && r[k] != null ? r[k].trim() : "");
   const out = [];
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];
     if (!g(row, c.name)) continue;
-    out.push({ name: g(row, c.name), type: g(row, c.type), subtype: g(row, c.sub),
-      package: g(row, c.pkg), uses: g(row, c.uses), repo: g(row, c.repo), description: g(row, c.desc) });
+    out.push({ name: g(row, c.name), type: g(row, c.type), subtype: g(row, c.sub), package: g(row, c.pkg),
+      ecosystem: g(row, c.eco), uses: g(row, c.uses), repo: g(row, c.repo), description: g(row, c.desc) });
   }
   return out;
 }
@@ -132,11 +146,27 @@ function hostClass(token) {
   if (t.includes("vercel")) return "ver";
   if (t.includes("server")) return "srv";
   if (t.includes("cloudflare")) return "cf";
+  if (t.includes("medium") || t.includes("substack")) return "pub";
   return "ext";
 }
 function hostTokens(v) {
   return (v || "").split(/[,/]/).map(s => s.trim()).filter(s => s && s !== "--");
 }
-const TYPE_CLASS = t => "t-" + (["spa", "backend", "blog", "library", "manual", "webfront"].includes(t.toLowerCase()) ? t.toLowerCase() : "other");
+/* Service types are free text in the catalog; norm() folds "RPG Manual" and
+   friends onto a class name. An unknown type falls back to the generic badge. */
+const TYPE_KEYS = ["spa", "backend", "blog", "library", "manual", "rpgmanual", "webfront", "docker", "desktop"];
+const TYPE_CLASS = t => "t-" + (TYPE_KEYS.includes(norm(t)) ? norm(t) : "other");
 const repoLabel = u => u.replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/\/$/, "") || u;
+
+/* `package` mixes npm names, docker image refs and plain store URLs (itch.io,
+   a hosted demo) — only the last of those is worth linking. */
+const pkgURL = v => /^https?:\/\//i.test((v || "").trim()) ? (v || "").trim() : "";
+const pkgLabel = v => pkgURL(v) ? domainLabel(v) : (v || "").trim();
+const pkgHTML = v => {
+  const u = pkgURL(v);
+  return u
+    ? `<a class="repo" href="${ESC(u)}" target="_blank" rel="noopener" title="${ESC(u)}">${PKG_SVG}${ESC(pkgLabel(v))}</a>`
+    : `<span class="repo pkg" title="package">${PKG_SVG}${ESC(pkgLabel(v))}</span>`;
+};
 const GH_SVG = `<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>`;
+const PKG_SVG = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M8 1.7 14 5v6l-6 3.3L2 11V5z"/><path d="M2 5l6 3.3L14 5M8 8.3v6"/></svg>`;

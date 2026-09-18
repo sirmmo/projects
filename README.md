@@ -53,8 +53,8 @@ Two tabs of the published Google Sheet feed the page:
 
 | Tab | What it provides |
 | --- | --- |
-| [`gid=0`](https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv) | deployed domains (`status = deployed`), hosting, ecosystem |
-| [`gid=554397184`](https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv) | services catalog — `type`, `subtype`, `package`, `uses`, `Repo`, `Descrizione` |
+| [`gid=0`](https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv) | deployed domains (`status = deployed`), name, hosting, ecosystem, description |
+| [`gid=554397184`](https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv) | services catalog — `type`, `subtype`, `package`, `ecosistema`, `uses`, `Repo`, `Descrizione` |
 
 The page joins them in the browser on the service name (case/punctuation
 insensitive; a domain-name fallback and multi-service entries are handled), so a
