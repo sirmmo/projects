@@ -14,7 +14,7 @@ OFM,Rock of Bral - Lower side,https://map.fantasymaps.org/rock_of_bral_lower,D&D
 OFM,Rock of Bral - Upper side,https://map.fantasymaps.org/rock_of_bral_upper,D&D
 OFM,Rock of Bral - Upper side (Open World),https://map.fantasymaps.org/rock_of_bral_upper-openworld,D&D
 OFM,Spelljammer Flow,https://map.fantasymaps.org/flow,D&D
-OFM,Toril,https://map.fantasymaps.org/toril,D&D
+"OFM, GaiaWM",Toril,https://map.fantasymaps.org/toril,D&D
 OFM,Toril,https://map.fantasymaps.org/toril_2,D&D
 OFM,discworld,https://map.fantasymaps.org/discworld,Discworld
 OFM,Dune,https://map.fantasymaps.org/dune,Dune
@@ -28,7 +28,7 @@ OFM,Lanerynes,https://map.fantasymaps.org/1673194637669,Homebrew
 OFM,Luxastra Adventures,https://map.fantasymaps.org/luxastra,Homebrew
 OFM,Middle Earth,https://map.fantasymaps.org/middle-earth,Middle-earth
 OFM,Silent Hill,https://map.fantasymaps.org/silent_hill,Silent Hill
-OFM,Star Trek Adventures,https://map.fantasymaps.org/sta,Star Trek
+"OFM, GaiaWM",Star Trek Adventures,https://map.fantasymaps.org/sta,Star Trek
 OFM,Star Trek Adventures - Bajor,https://map.fantasymaps.org/sta-bajor,Star Trek
 OFM,Star Trek Adventures - Sol - III - I (Moon),https://map.fantasymaps.org/sta-sol-iii-i,Star Trek
 OFM,Star Trek Adventures - Sol - IV (Mars),https://map.fantasymaps.org/sta-sol-iv,Star Trek
@@ -43,3 +43,4 @@ OFM,edworld,https://map.fantasymaps.org/test_edway,Test
 OFM,Valheim - Seed Xc2ACXKUBU,https://map.fantasymaps.org/vh_Xc2ACXKUBU,Valheim
 OFM,Warhammer 40K,https://map.fantasymaps.org/wh4k,Warhammer
 OFM,Zelda Breath of the Wild,https://map.fantasymaps.org/zelda-botw,Zelda
+OHM,main map,https://map.openhistorymap.org,OHM

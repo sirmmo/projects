@@ -15,7 +15,7 @@ library + vanilla browser JS only — keep it that way.
 
 ```bash
 python3 build.py                          # refetch all three sheet tabs, rewrite the embedded snapshots
-python3 build.py deployed.csv catalog.csv data/ofm-worlds.csv   # same, from local CSVs (offline)
+python3 build.py deployed.csv catalog.csv data/ofm-maps.csv      # same, from local CSVs (offline)
 python3 -m http.server                    # preview at http://localhost:8000
 ```
 
@@ -34,7 +34,7 @@ Three tabs of one published sheet, joined **in the browser** on the service name
 | --- | --- | --- |
 | `gid=0` — deployed domains | one per deployed domain | `e` (display name), `dominio`, `ecosystem`, `servizio`, `BE hosting`, `FE hosting`, `others`, `status`, `forward to`, `attention`, `featured`, `description` |
 | `gid=554397184` — services catalog | one per service | `Servizio`, `type`, `subtype`, `package`, `ecosistema`, `uses`, `Repo`, `Descrizione` |
-| `gid=1984372056` — instances | one per instance a service hosts | `Project`, `Name`, `url`, `franchise` |
+| `gid=1984372056` — maps | one per map | `Project` (a **list**), `Name`, `url`, `franchise` |
 
 Things that will bite you:
 
@@ -57,15 +57,16 @@ Things that will bite you:
   fallback to a catalog entry named after the domain. `servizio` may be a
   comma-separated list — one domain can run several services.
 - `--` is a "not set" placeholder throughout, filtered out by `splitList()`.
-- Instances are the named things a service hosts — OFM's worlds, say. They join
-  on `Project` → service name, so they belong to the *service*, and every domain
-  running that service shows them. `url` is often blank; render the name as
-  plain text then. `data/ofm-worlds.csv` is a seed for that tab, scraped from
-  the live OFM world list.
+- Maps are the named things a service hosts — OFM's worlds, say. They join on
+  `Project` → service name, so they belong to the *service*, and every domain
+  running that service shows them. `Project` is a **comma-separated list**: a
+  map several services share (`OFM, GaiaWM`) is one map listed under each, not
+  a copy per service. `url` can be blank; render the name as plain text then.
+  `data/ofm-maps.csv` is a snapshot of that tab, usable as the offline fixture.
 
 **The schema is parsed twice**: `build.py` (`clean_projects` / `clean_services` /
-`clean_instances`) for the snapshot, and `sheet.js` (`csvToProjects` /
-`csvToServices` / `csvToInstances`) for the live fetch. A sheet column change
+`clean_maps`) for the snapshot, and `sheet.js` (`csvToProjects` /
+`csvToServices` / `csvToMaps`) for the live fetch. A sheet column change
 means editing both.
 
 ## Architecture
@@ -73,7 +74,7 @@ means editing both.
 Three layers of freshness, by design:
 
 1. Each view boots from an **embedded snapshot** — `PROJECTS`, `SERVICES` and
-   `INSTANCES` literals between the `/* DATA:START */` and `/* DATA:END */`
+   `MAPS` literals between the `/* DATA:START */` and `/* DATA:END */`
    markers — so the
    page renders instantly and still works with the sheet unreachable.
 2. It then calls `loadLive()` and re-renders from the sheet, flipping the header
@@ -108,7 +109,7 @@ view only. Accepts `?q=` to preseed the search.
 (the `uses` column connects service names, so services — not domains — are the
 natural node) enriched with the deployed rows running them. Ecosystem hub nodes
 are synthesised, otherwise most of the graph would be isolated vertices, and
-each row of the instances tab becomes a leaf off the service hosting it. Three
+each row of the maps tab becomes a leaf off the service(s) hosting it. Three
 node kinds — `svc`, `eco`, `inst` — and five edge kinds: `uses`, `eco`, `fwd`,
 `repo`, `hosts`.
 
@@ -116,16 +117,19 @@ node kinds — `svc`, `eco`, `inst` — and five edge kinds: `uses`, `eco`, `fwd
   `alpha` cools per tick; `reheat()` restarts the rAF loop.
 - Initial positions come from a **seeded PRNG** (`mulberry32`) — the same graph
   every load. Hubs are seeded before services, because services are placed
-  relative to their hub, and instances last of all, relative to their host.
-- Instances ride along with their host: `visible()` defers to it, `applyFilters()`
-  recomputes them *after* every adjustment to the services, and the `instances`
+  relative to their hub, and maps last of all, relative to their first host.
+- Maps ride along with their hosts: `visible()` defers to them, `applyFilters()`
+  recomputes maps *after* every adjustment to the services, and the `maps`
   edge chip (`edgeOn.hosts`) hides the nodes as well as the edges — they have no
   meaning without the service. `hosts` and `eco` edges say where a node belongs
   rather than what it depends on, so neither counts towards `deg`, which would
   otherwise balloon the one service that hosts dozens of them.
-- Two instances can share a display name (OFM lists "Toril" twice at different
-  urls), so `instKey()` keys them on name *and* url. `svcPanel()` builds its
-  jump buttons with the same helper — they have to agree or the buttons go dead.
+- `mapKey()` keys a map on **itself** — name *and* url, never a host. Keying on
+  the host would split a shared map into one lookalike leaf per service instead
+  of the single node that bridges them; leaving the url out would collapse the
+  two different maps OFM both calls "Toril". `n.hosts` is therefore a list, and
+  a map is visible while *any* of its hosts is. `svcPanel()` builds its jump
+  buttons with the same helper — they have to agree or the buttons go dead.
 - Services with no edge at all carry no relational information and are parked on
   an ellipse by `placeLoose()` instead of being simulated.
 - Shapes draw in world space; **all text draws in screen space** at a fixed size,

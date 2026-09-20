@@ -1,7 +1,7 @@
 /* Sheet loading shared by index.html (list view) and graph.html (graph view).
  *
  * Both pages embed a snapshot of the three sheet tabs (PROJECTS / SERVICES /
- * INSTANCES, written between the DATA markers by build.py), paint from it
+ * MAPS, written between the DATA markers by build.py), paint from it
  * immediately, then call loadLive() to refresh from the published sheet.
  *
  * The CSV column names below mirror build.py's parsers — a sheet schema change
@@ -10,7 +10,7 @@
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=0&single=true&output=csv";
 const CATALOG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=554397184&single=true&output=csv";
-const INSTANCES_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=1984372056&single=true&output=csv";
+const MAPS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTgXiDl9xtdUWBDITRCkGW0n2W4fIdgoNjlMzWJphk1G7AE-8J9sv8rp8CGkrH51vshv1a8TUtcc_i/pub?gid=1984372056&single=true&output=csv";
 
 /* ---- small shared helpers ---- */
 const norm = s => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -40,27 +40,30 @@ function servicesFor(p, idx) {
   return svcs;
 }
 
-/* Instances are the named things a service hosts — OFM's worlds, say — filed
-   under the service name in the `Project` column. */
-function instanceIndex(instances) {
+/* Maps are the named things a service hosts — OFM's worlds, say — filed under
+   the service name in the `Project` column. That column is a list: a map used
+   by several services ("OFM, GaiaWM") is one map, indexed under each of them. */
+function mapIndex(maps) {
   const idx = {};
-  (instances || []).forEach(i => {
-    if (!i.project) return;
-    const k = norm(i.project);
-    (idx[k] = idx[k] || []).push(i);
+  (maps || []).forEach(m => {
+    splitList(m.project).forEach(pr => {
+      const k = norm(pr);
+      (idx[k] = idx[k] || []).push(m);
+    });
   });
   return idx;
 }
 
-/* Every instance of every service a deployed row runs. */
-function instancesFor(p, iidx, svcs) {
+/* Every map of every service a deployed row runs, each listed once however
+   many of those services share it. */
+function mapsFor(p, midx, svcs) {
   const keys = uniq(svcs.map(s => norm(s.name)).concat(splitList(p.service).map(norm)));
-  return keys.flatMap(k => iidx[k] || []);
+  return uniq(keys.flatMap(k => midx[k] || []));
 }
 
-function enrich(projects, services, instances) {
+function enrich(projects, services, maps) {
   const idx = serviceIndex(services);
-  const iidx = instanceIndex(instances);
+  const midx = mapIndex(maps);
   return projects.map(p => {
     const svcs = servicesFor(p, idx);
     return Object.assign({}, p, {
@@ -75,7 +78,7 @@ function enrich(projects, services, instances) {
       // The catalog files every service under an `ecosistema` of its own, which
       // can differ from the ecosystem the domain is deployed in.
       ecosystems: uniq([p.ecosystem].concat(svcs.flatMap(s => splitList(s.ecosystem))).filter(Boolean)),
-      instances: instancesFor(p, iidx, svcs),
+      maps: mapsFor(p, midx, svcs),
     });
   });
 }
@@ -146,7 +149,7 @@ function csvToServices(text) {
   return out;
 }
 
-function csvToInstances(text) {
+function csvToMaps(text) {
   const rows = parseCSV(text);
   if (!rows.length) return [];
   const head = rows[0].map(h => h.trim());
@@ -164,18 +167,18 @@ function csvToInstances(text) {
 }
 
 /* Fetch all three tabs. Resolves with the deployed rows plus the catalog and
-   the instances (null when those tabs are unreachable — callers fall back to
+   the maps (null when those tabs are unreachable — callers fall back to
    the embedded snapshot). Rejects only if the deployed tab itself fails. */
 function loadLive() {
   const soft = url => fetch(url, { cache: "no-store" }).then(r => r.ok ? r.text() : "").catch(() => "");
   return Promise.all([
     fetch(CSV_URL, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }),
     soft(CATALOG_URL),
-    soft(INSTANCES_URL),
+    soft(MAPS_URL),
   ]).then(([pText, sText, iText]) => ({
     projects: csvToProjects(pText),
     services: sText ? csvToServices(sText) : null,
-    instances: iText ? csvToInstances(iText) : null,
+    maps: iText ? csvToMaps(iText) : null,
   }));
 }
 

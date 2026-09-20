@@ -30,7 +30,7 @@
   .legend .sw.undep { background: transparent; border: 1.5px dashed #6b7488; }
   .legend .sw.feat { background: #ffcf5a; box-shadow: 0 0 0 2px rgba(255,207,90,.3); }
   .legend .sw.nok { background: var(--warn); }
-  .legend .sw.inst { width: 9px; height: 9px; border-radius: 2px; transform: rotate(45deg); background: #6ea8fe; opacity: .65; }
+  .legend .sw.map { width: 9px; height: 9px; border-radius: 2px; transform: rotate(45deg); background: #6ea8fe; opacity: .65; }
   .legend .ln { width: 20px; height: 0; border-top: 2px solid; flex: none; }
   .legend .ln.uses { border-color: #6ea8fe; }
   .legend .ln.eco { border-color: #7c5cff; opacity: .55; }
@@ -1937,7 +1937,7 @@ const SERVICES = [
     "description": ""
   }
 ];
-const INSTANCES = [
+const MAPS = [
   {
     "project": "OFM",
     "name": "Alien",
@@ -2031,12 +2031,6 @@ const INSTANCES = [
   {
     "project": "OFM",
     "name": "Toril",
-    "url": "https://map.fantasymaps.org/toril",
-    "franchise": "D&D"
-  },
-  {
-    "project": "OFM",
-    "name": "Toril",
     "url": "https://map.fantasymaps.org/toril_2",
     "franchise": "D&D"
   },
@@ -2111,12 +2105,6 @@ const INSTANCES = [
     "name": "Silent Hill",
     "url": "https://map.fantasymaps.org/silent_hill",
     "franchise": "Silent Hill"
-  },
-  {
-    "project": "OFM",
-    "name": "Star Trek Adventures",
-    "url": "https://map.fantasymaps.org/sta",
-    "franchise": "Star Trek"
   },
   {
     "project": "OFM",
@@ -2201,6 +2189,24 @@ const INSTANCES = [
     "name": "Zelda Breath of the Wild",
     "url": "https://map.fantasymaps.org/zelda-botw",
     "franchise": "Zelda"
+  },
+  {
+    "project": "OFM, GaiaWM",
+    "name": "Toril",
+    "url": "https://map.fantasymaps.org/toril",
+    "franchise": "D&D"
+  },
+  {
+    "project": "OFM, GaiaWM",
+    "name": "Star Trek Adventures",
+    "url": "https://map.fantasymaps.org/sta",
+    "franchise": "Star Trek"
+  },
+  {
+    "project": "OHM",
+    "name": "main map",
+    "url": "https://map.openhistorymap.org",
+    "franchise": "OHM"
   }
 ];
 /* DATA:END */
@@ -2212,19 +2218,21 @@ const INSTANCES = [
    enriched with the deployed rows that run them; services with no deployed
    domain stay in as "not deployed" nodes. Ecosystem hubs are synthesised so
    that the many services with no dependency edge still have somewhere to sit,
-   and each instance a service hosts (OFM's worlds) is a leaf off that service.
+   and each map a service hosts (OFM's worlds) is a leaf off that service.
 
    Edges:
      uses  service -> service   (catalog `uses`)
      eco   service -> ecosystem (deployed row's `ecosystem` + catalog `ecosistema`)
      fwd   service -> service   (deployed row's `forward to`, matched on domain)
      repo  service -- service   (two services sharing one repository)
-     hosts service -> instance  (instances tab, joined on `Project`)
+     hosts service -> map       (maps tab, joined on `Project`)
    ============================================================ */
-const instKey = (hostName, i) =>
-  "i:" + norm(hostName) + ":" + norm(i.name) + (i.url ? ":" + norm(i.url) : "");
+/* A map is keyed on itself rather than on a host, so a map listed under
+   several projects stays one node. Two maps can still share a display name
+   (OFM lists "Toril" twice, at different urls), hence the url in the key. */
+const mapKey = m => "m:" + norm(m.name) + (m.url ? ":" + norm(m.url) : "");
 
-function buildGraph(projects, services, instances) {
+function buildGraph(projects, services, maps) {
   const nodes = [];
   const byKey = new Map();
 
@@ -2233,7 +2241,7 @@ function buildGraph(projects, services, instances) {
     let n = byKey.get(key);
     if (!n) {
       n = { key, kind: "svc", name, types: [], subtypes: [], pkg: "", repo: "", desc: "", depDesc: "",
-            uses: [], deploys: [], ecos: [], catEcos: [], domains: [], instances: [],
+            uses: [], deploys: [], ecos: [], catEcos: [], domains: [], maps: [],
             deployed: false, featured: false, nok: false };
       nodes.push(n); byKey.set(key, n);
     }
@@ -2252,9 +2260,9 @@ function buildGraph(projects, services, instances) {
     n.desc = n.desc || s.description;
   });
 
-  // Instances (OFM's worlds, say) are filed under the service name.
-  const iidx = instanceIndex(instances);
-  nodes.filter(n => n.kind === "svc").forEach(n => { n.instances = iidx[norm(n.name)] || []; });
+  // Maps (OFM's worlds, say) are filed under the service name.
+  const midx = mapIndex(maps);
+  nodes.filter(n => n.kind === "svc").forEach(n => { n.maps = midx[norm(n.name)] || []; });
 
   // Attach deployed rows. One row can run several services (comma-separated).
   const idx = serviceIndex(services);
@@ -2282,7 +2290,7 @@ function buildGraph(projects, services, instances) {
   nodes.filter(n => n.kind === "svc").forEach(n => {
     n.ecos = uniq(n.ecos.concat(n.catEcos));
     n.desc = n.depDesc || n.desc;          // the deployed row describes it best now
-    if (!n.instances.length) n.instances = iidx[norm(n.name)] || [];
+    if (!n.maps.length) n.maps = midx[norm(n.name)] || [];
   });
 
   // Ecosystem hubs. Hues are spread by the golden angle over the sorted list so
@@ -2332,14 +2340,19 @@ function buildGraph(projects, services, instances) {
     for (let i = 1; i < group.length; i++) link(group[i - 1], group[i], "repo");
   });
 
-  // Instances hang off the service that hosts them, one leaf each.
+  // Maps hang off the services hosting them. A map several projects share is
+  // one node with an edge to each, which is what makes it read as a bridge
+  // between them instead of two lookalike leaves.
   nodes.filter(n => n.kind === "svc").forEach(n => {
-    n.instances.forEach(i => {
-      const key = instKey(n.name, i);
-      if (byKey.get(key)) return;
-      const m = { key, kind: "inst", name: i.name, url: i.url,
-                  franchise: i.franchise, host: n, hue: null };
-      nodes.push(m); byKey.set(key, m);
+    n.maps.forEach(row => {
+      const key = mapKey(row);
+      let m = byKey.get(key);
+      if (!m) {
+        m = { key, kind: "map", name: row.name, url: row.url,
+              franchise: row.franchise, hosts: [], hue: null };
+        nodes.push(m); byKey.set(key, m);
+      }
+      if (!m.hosts.includes(n)) m.hosts.push(n);
       link(n, m, "hosts");
     });
   });
@@ -2349,7 +2362,7 @@ function buildGraph(projects, services, instances) {
     if (n.kind === "svc") n.hue = n.ecos.length && hueOf[n.ecos[0]] != null ? hueOf[n.ecos[0]] : null;
     n.deg = 0;
   });
-  nodes.forEach(n => { if (n.kind === "inst") n.hue = n.host.hue; });
+  nodes.forEach(n => { if (n.kind === "map") n.hue = n.hosts.length ? n.hosts[0].hue : null; });
   // `eco` and `hosts` say where a node belongs, not what it depends on, so
   // neither counts towards the degree that sizes a node.
   links.forEach(l => { if (l.kind !== "eco" && l.kind !== "hosts") { l.s.deg++; l.t.deg++; } });
@@ -2360,7 +2373,7 @@ function buildGraph(projects, services, instances) {
   const linked = new Set();
   links.forEach(l => { linked.add(l.s); linked.add(l.t); });
   nodes.forEach(n => { n.loose = n.kind === "svc" && !linked.has(n); });
-  // An instance is never loose — it always has its host.
+  // A map is never loose — it always has at least one host.
 
   return { nodes, links, byKey };
 }
@@ -2404,15 +2417,17 @@ function seedPositions(G, keep) {
     }
   });
 
-  // Instances last, in a tight ring around the host that is now placed — a
+  // Maps last, in a tight ring around the host that is now placed — a
   // service with dozens of them must not fling the simulation apart on tick 1.
   const seq = new Map();
-  G.nodes.filter(n => n.kind === "inst").forEach(n => {
-    const i = seq.get(n.host.key) || 0;
-    seq.set(n.host.key, i + 1);
+  G.nodes.filter(n => n.kind === "map").forEach(n => {
+    const anchor = n.hosts[0];                 // a shared map starts by its first
+    if (!anchor) return;
+    const i = seq.get(anchor.key) || 0;
+    seq.set(anchor.key, i + 1);
     if (kept(n)) return;
-    const a = (i / Math.max(n.host.instances.length, 1)) * Math.PI * 2;
-    place(n, n.host.x + Math.cos(a) * 62, n.host.y + Math.sin(a) * 62);
+    const a = (i / Math.max(anchor.maps.length, 1)) * Math.PI * 2;
+    place(n, anchor.x + Math.cos(a) * 62, anchor.y + Math.sin(a) * 62);
   });
 }
 
@@ -2422,9 +2437,9 @@ const SPRING = {
   uses: { len: 178, k: 0.032 },
   fwd:  { len: 130, k: 0.028 },
   repo: { len: 92,  k: 0.020 },
-  hosts:{ len: 58,  k: 0.055 },      // short and stiff: instances cling to their host
+  hosts:{ len: 58,  k: 0.055 },      // short and stiff: maps cling to their host
 };
-const CHARGE = { eco: 9000, svc: 2100, inst: 260 };
+const CHARGE = { eco: 9000, svc: 2100, map: 260 };
 
 let alpha = 1;
 const reheat = (v = 0.75) => { alpha = Math.max(alpha, v); if (!raf) raf = requestAnimationFrame(frame); };
@@ -2501,7 +2516,7 @@ let G, hover = null, sel = null, dragging = null, raf = null, W = 0, H = 0, dpr 
 const toWorld = (px, py) => [(px - view.x) / view.s, (py - view.y) / view.s];
 
 function visible(n) {
-  if (n.kind === "inst") return edgeOn.hosts && visible(n.host);
+  if (n.kind === "map") return edgeOn.hosts && n.hosts.some(h => visible(h));
   if (n.kind === "eco") return state.eco === null ? !state.undeployed : n.name === state.eco;
   if (state.undeployed && n.deployed) return false;
   if (state.featured && !n.featured) return false;
@@ -2526,26 +2541,26 @@ function applyFilters() {
   G.links.forEach(l => { if (l.kind === "eco" && l.s.vis) populated.add(l.t); });
   G.nodes.forEach(n => { if (n.kind === "eco" && !populated.has(n)) n.vis = false; });
 
-  // Recomputed after every adjustment above, so an instance always agrees with
+  // Recomputed after every adjustment above, so an map always agrees with
   // whatever its host ended up as.
-  G.nodes.forEach(n => { if (n.kind === "inst") n.vis = edgeOn.hosts && n.host.vis; });
+  G.nodes.forEach(n => { if (n.kind === "map") n.vis = edgeOn.hosts && n.hosts.some(h => h.vis); });
 
   G.links.forEach(l => { l.vis = edgeOn[l.kind] && l.s.vis && l.t.vis; });
-  const nInst = G.nodes.filter(n => n.vis && n.kind === "inst").length;
+  const nMaps = G.nodes.filter(n => n.vis && n.kind === "map").length;
   document.getElementById("count").textContent =
     `${G.nodes.filter(n => n.vis && n.kind === "svc").length} services · ` +
-    (nInst ? `${nInst} instance${nInst === 1 ? "" : "s"} · ` : "") +
+    (nMaps ? `${nMaps} map${nMaps === 1 ? "" : "s"} · ` : "") +
     `${G.links.filter(l => l.vis && l.kind !== "eco" && l.kind !== "hosts").length} connections`;
 }
 
 const haystack = n => [n.name, n.desc, n.pkg, n.repo, n.domains.join(" "), n.ecos.join(" "),
   n.types.join(" "), n.subtypes.join(" "), n.deploys.map(p => p.name).join(" "),
-  n.instances.map(i => i.name + " " + i.franchise).join(" ")].join(" ").toLowerCase();
-const instHay = n => [n.name, n.franchise, n.host.name].join(" ").toLowerCase();
+  n.maps.map(i => i.name + " " + i.franchise).join(" ")].join(" ").toLowerCase();
+const mapHay = n => [n.name, n.franchise, n.hosts.map(h => h.name).join(" ")].join(" ").toLowerCase();
 function isMatch(n) {
   if (!state.q) return true;
   if (n.kind === "eco") return n.name.toLowerCase().includes(state.q);
-  if (n.kind === "inst") return state.q.split(/\s+/).every(t => instHay(n).includes(t));
+  if (n.kind === "map") return state.q.split(/\s+/).every(t => mapHay(n).includes(t));
   return state.q.split(/\s+/).every(t => haystack(n).includes(t));
 }
 
@@ -2563,7 +2578,7 @@ function focusSet() {
    space at a fixed size, so labels stay readable at any zoom level. Node radii
    have a screen-space floor for the same reason — hit testing uses the same
    function, so the two stay in agreement. */
-const nodeR = n => n.kind === "inst"
+const nodeR = n => n.kind === "map"
   ? Math.max(4.4, 3.4 / view.s)
   : Math.max(6 + 3.1 * Math.sqrt(n.deg) + (n.deployed ? 2 : 0), 5.5 / view.s);
 const toScreen = n => [n.x * view.s + view.x, n.y * view.s + view.y];
@@ -2613,11 +2628,11 @@ function draw() {
   });
   ctx.globalAlpha = 1;
 
-  /* instances first, so a service always sits on top of its own leaves */
+  /* maps first, so a service always sits on top of its own leaves */
   G.nodes.forEach(n => {
-    if (!n.vis || n.kind !== "inst") return;
+    if (!n.vis || n.kind !== "map") return;
     ctx.globalAlpha = dim(n) ? 0.14 : 1;
-    drawInst(n);
+    drawMap(n);
   });
 
   /* service nodes (world space) */
@@ -2646,7 +2661,7 @@ function drawLabels(dim) {
   });
 
   const rank = n => n === hover || n === sel ? 0
-    : n.kind === "inst" ? 5 : n.featured ? 1 : n.deg ? 2 : n.deployed ? 3 : 4;
+    : n.kind === "map" ? 5 : n.featured ? 1 : n.deg ? 2 : n.deployed ? 3 : 4;
   const svc = G.nodes.filter(n => n.vis && n.kind !== "eco" && !dim(n))
     .sort((a, b) => rank(a) - rank(b) || (b.deg || 0) - (a.deg || 0) || a.name.localeCompare(b.name));
 
@@ -2663,7 +2678,7 @@ function drawLabels(dim) {
     ctx.lineJoin = "round";
     ctx.strokeStyle = "rgba(12,14,20,.85)"; ctx.lineWidth = 3.5;
     ctx.strokeText(n.name, sx, y, 150);
-    ctx.fillStyle = n.kind === "inst" ? "#8d95a8" : n.deployed ? "#cfd6e6" : "#7d8598";
+    ctx.fillStyle = n.kind === "map" ? "#8d95a8" : n.deployed ? "#cfd6e6" : "#7d8598";
     ctx.fillText(n.name, sx, y, 150);
     placed.push(box);
   });
@@ -2704,9 +2719,9 @@ function drawHub(n) {
   return { x0: sx - w / 2, x1: sx + w / 2, y0: sy - h / 2, y1: sy + h / 2 };
 }
 
-/* Instances are small diamonds in their host's colour — a different shape so
+/* Maps are small diamonds in their host's colour — a different shape so
    they never read as another service at a glance. */
-function drawInst(n) {
+function drawMap(n) {
   const r = nodeR(n);
   ctx.beginPath();
   ctx.moveTo(n.x, n.y - r); ctx.lineTo(n.x + r, n.y);
@@ -2842,7 +2857,7 @@ cv.addEventListener("pointerleave", () => { hover = null; tipEl.classList.remove
 cv.addEventListener("dblclick", e => {
   const rect = cv.getBoundingClientRect();
   const n = nodeAt(e.clientX - rect.left, e.clientY - rect.top);
-  if (n && n.kind === "inst" && n.url) window.open(n.url, "_blank", "noopener");
+  if (n && n.kind === "map" && n.url) window.open(n.url, "_blank", "noopener");
   else if (n && n.kind === "svc" && n.domains.length) window.open(domainURL(n.domains[0]), "_blank", "noopener");
 });
 cv.addEventListener("wheel", e => {
@@ -2860,10 +2875,10 @@ function showTip(n, px, py) {
   if (!n) { tipEl.classList.remove("on"); return; }
   const sub = n.kind === "eco"
     ? `${n.members} service${n.members === 1 ? "" : "s"}`
-    : n.kind === "inst"
-    ? [n.franchise, "instance of " + n.host.name].filter(Boolean).join(" · ")
+    : n.kind === "map"
+    ? [n.franchise, n.hosts.map(h => h.name).join(" + ")].filter(Boolean).join(" · ")
     : [domainLabel(n.domains[0]), n.types.join(" · "),
-       n.instances.length ? `${n.instances.length} instances` : "",
+       n.maps.length ? `${n.maps.length} maps` : "",
        n.deployed ? "" : "not deployed"].filter(Boolean).join(" · ");
   tipEl.innerHTML = `<div>${ESC(n.name)}</div>` + (sub ? `<div class="t2">${ESC(sub)}</div>` : "");
   tipEl.style.left = px + "px";
@@ -2876,7 +2891,7 @@ function select(n) {
   sel = n;
   if (!n) { panel.classList.remove("open"); draw(); return; }
   panel.className = "panel open" + (n.kind === "svc" && n.featured ? " feat" : "");
-  panel.innerHTML = n.kind === "eco" ? hubPanel(n) : n.kind === "inst" ? instPanel(n) : svcPanel(n);
+  panel.innerHTML = n.kind === "eco" ? hubPanel(n) : n.kind === "map" ? mapPanel(n) : svcPanel(n);
   panel.scrollTop = 0;
   panel.querySelector(".close").addEventListener("click", () => select(null));
   panel.querySelectorAll("[data-go]").forEach(b =>
@@ -2892,9 +2907,9 @@ function center(n) {
 function relBtns(list) {
   return list.map(n => `<button data-go="${ESC(n.key)}">${ESC(n.name)}</button>`).join("");
 }
-/* The panel has room to list every instance, grouped by franchise so a service
+/* The panel has room to list every map, grouped by franchise so a service
    with dozens of them still reads as something with a shape. */
-function instancesSection(list, hostName) {
+function mapsSection(list) {
   if (!list || !list.length) return "";
   const groups = new Map();
   list.forEach(i => {
@@ -2904,12 +2919,12 @@ function instancesSection(list, hostName) {
   });
   const rows = [...groups.entries()]
     .sort((a, b) => (a[0] === "Other") - (b[0] === "Other") || a[0].toLowerCase().localeCompare(b[0].toLowerCase()))
-    .map(([fran, items]) => `<div class="inst">
-      <div class="ifran">${ESC(fran)} <span class="n">${items.length}</span></div>
-      <div class="ilist">${items.map(i =>
-        `<button class="ilink" data-go="${ESC(instKey(hostName, i))}">${ESC(i.name)}</button>`).join("")}</div>
+    .map(([fran, items]) => `<div class="mapgrp">
+      <div class="mfran">${ESC(fran)} <span class="n">${items.length}</span></div>
+      <div class="mlist">${items.map(i =>
+        `<button class="mlink" data-go="${ESC(mapKey(i))}">${ESC(i.name)}</button>`).join("")}</div>
     </div>`).join("");
-  return `<section><span class="lbl">Instances · ${list.length}</span>${rows}</section>`;
+  return `<section><span class="lbl">Maps · ${list.length}</span>${rows}</section>`;
 }
 
 function svcPanel(n) {
@@ -2947,22 +2962,22 @@ function svcPanel(n) {
     ${usesN.length ? `<section><span class="lbl">Uses</span><div class="rel">${relBtns(usesN)}</div></section>` : ""}
     ${usedBy.length ? `<section><span class="lbl">Used by</span><div class="rel">${relBtns(usedBy)}</div></section>` : ""}
     ${fwd.length ? `<section><span class="lbl">Forwards to</span><div class="rel">${relBtns(fwd)}</div></section>` : ""}
-    ${instancesSection(n.instances, n.name)}
+    ${mapsSection(n.maps)}
     ${n.repo || n.pkg ? `<div class="linkrow">
       ${n.repo ? `<a class="repo" href="${ESC(n.repo)}" target="_blank" rel="noopener" title="${ESC(n.repo)}">${GH_SVG}${ESC(repoLabel(n.repo))}</a>` : ""}
       ${n.pkg ? pkgHTML(n.pkg) : ""}</div>` : ""}
     <a class="golist" href="./?q=${encodeURIComponent(n.name)}">Open in the list view →</a>`;
 }
-function instPanel(n) {
+function mapPanel(n) {
   return `<div class="close" title="Close">✕</div>
     <div>
-      <div class="eyebrow">Instance</div>
+      <div class="eyebrow">Map</div>
       <h2>${ESC(n.name)}</h2>
     </div>
     ${n.franchise ? `<div class="meta"><b>${ESC(n.franchise)}</b></div>` : ""}
-    <section><span class="lbl">Hosted by</span><div class="rel">${relBtns([n.host])}</div></section>
+    <section><span class="lbl">Hosted by</span><div class="rel">${relBtns(n.hosts)}</div></section>
     ${n.url ? `<div class="linkrow"><a class="repo" href="${ESC(n.url)}" target="_blank" rel="noopener" title="${ESC(n.url)}">${ESC(domainLabel(n.url))} ↗</a></div>` : ""}
-    <a class="golist" href="./?q=${encodeURIComponent(n.host.name)}">Open ${ESC(n.host.name)} in the list view →</a>`;
+    <a class="golist" href="./?q=${encodeURIComponent(n.hosts[0].name)}">Open ${ESC(n.hosts[0].name)} in the list view →</a>`;
 }
 
 function hubPanel(n) {
@@ -2981,7 +2996,7 @@ function hubPanel(n) {
 
 /* ---------- chips ---------- */
 const EDGE_KINDS = [["uses", "uses"], ["eco", "ecosystem"], ["fwd", "forwards"],
-  ["repo", "shared repo"], ["hosts", "instances"]];
+  ["repo", "shared repo"], ["hosts", "maps"]];
 const present = k => G.links.some(l => l.kind === k);
 
 function renderChips() {
@@ -3033,7 +3048,7 @@ function renderLegend() {
   if (svc.some(n => !n.deployed)) items.push(`<i><span class="sw undep"></span> catalog only</i>`);
   if (svc.some(n => n.featured)) items.push(`<i><span class="sw feat"></span> featured</i>`);
   if (svc.some(n => n.nok)) items.push(`<i><span class="sw nok"></span> needs attention</i>`);
-  if (G.nodes.some(n => n.kind === "inst")) items.push(`<i><span class="sw inst"></span> instance</i>`);
+  if (G.nodes.some(n => n.kind === "map")) items.push(`<i><span class="sw map"></span> map</i>`);
   EDGE_KINDS.forEach(([k, label]) => {
     if (present(k)) items.push(`<i><span class="ln ${k}"></span> ${label}</i>`);
   });
@@ -3046,9 +3061,9 @@ function setStatus(kind, text) {
   document.getElementById("statusText").textContent = text;
 }
 
-function load(projects, services, instances, keepPositions) {
+function load(projects, services, maps, keepPositions) {
   const keep = keepPositions && G ? new Map(G.nodes.map(n => [n.key, { x: n.x, y: n.y }])) : null;
-  G = buildGraph(projects, services, instances);
+  G = buildGraph(projects, services, maps);
   seedPositions(G, keep);
   renderLegend();
   renderChips();
@@ -3057,7 +3072,7 @@ function load(projects, services, instances, keepPositions) {
 }
 
 load(PROJECTS, typeof SERVICES !== "undefined" ? SERVICES : [],
-     typeof INSTANCES !== "undefined" ? INSTANCES : [], false);
+     typeof MAPS !== "undefined" ? MAPS : [], false);
 setStatus("snap", "snapshot");
 resize();
 for (let i = 0; i < 220; i++) tick();     // settle before the first paint
@@ -3072,11 +3087,11 @@ if (focusName) {
   else { document.getElementById("q").value = focusName; state.q = focusName.toLowerCase(); draw(); }
 }
 
-loadLive().then(({ projects, services, instances }) => {
+loadLive().then(({ projects, services, maps }) => {
   if (!projects.length) { setStatus("snap", "snapshot"); return; }
   const selKey = sel && sel.key;
   load(projects, services || (typeof SERVICES !== "undefined" ? SERVICES : []),
-       instances || (typeof INSTANCES !== "undefined" ? INSTANCES : []), true);
+       maps || (typeof MAPS !== "undefined" ? MAPS : []), true);
   if (selKey && G.byKey.get(selKey)) select(G.byKey.get(selKey)); else select(null);
   reheat(0.6);
   setStatus("live", "live · synced with sheet");

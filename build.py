@@ -4,7 +4,7 @@
 Three published Google Sheet tabs feed the pages:
   * gid=0          -> the deployed-domains list (status = "deployed")
   * gid=554397184  -> the services catalog (type / subtype / ecosistema / repo …)
-  * gid=1984372056 -> the instances a service hosts (OFM's worlds, say)
+  * gid=1984372056 -> the maps a service hosts (OFM's worlds, say)
 
 The browser joins them on the service name; this script just bakes a snapshot
 of all three tabs into every view (between the DATA:START / DATA:END markers)
@@ -28,7 +28,7 @@ BASE = ("https://docs.google.com/spreadsheets/d/e/"
         "/pub?gid={gid}&single=true&output=csv")
 DEPLOYED_URL = BASE.format(gid="0")
 CATALOG_URL = BASE.format(gid="554397184")
-INSTANCES_URL = BASE.format(gid="1984372056")
+MAPS_URL = BASE.format(gid="1984372056")
 HERE = Path(__file__).parent
 VIEWS = [HERE / "index.html", HERE / "graph.html"]   # every page carrying the DATA markers
 
@@ -98,7 +98,7 @@ def clean_services(rows):
     return out
 
 
-def clean_instances(rows):
+def clean_maps(rows):
     """The named things a service hosts, filed under the service name in the
     `Project` column -- OFM's worlds, say."""
     out = []
@@ -120,12 +120,12 @@ def main():
     a = sys.argv
     projects = clean_projects(load_csv(DEPLOYED_URL, a[1] if len(a) > 1 else None))
     services = clean_services(load_csv(CATALOG_URL, a[2] if len(a) > 2 else None))
-    instances = clean_instances(load_csv(INSTANCES_URL, a[3] if len(a) > 3 else None))
+    maps = clean_maps(load_csv(MAPS_URL, a[3] if len(a) > 3 else None))
     block = (
         "/* DATA:START */\n"
         f"const PROJECTS = {json.dumps(projects, ensure_ascii=False, indent=2)};\n"
         f"const SERVICES = {json.dumps(services, ensure_ascii=False, indent=2)};\n"
-        f"const INSTANCES = {json.dumps(instances, ensure_ascii=False, indent=2)};\n"
+        f"const MAPS = {json.dumps(maps, ensure_ascii=False, indent=2)};\n"
         "/* DATA:END */"
     )
     written = []
@@ -137,7 +137,7 @@ def main():
         view.write_text(html, encoding="utf-8")
         written.append(view.name)
     print(f"Wrote {len(projects)} deployed projects + {len(services)} catalog services "
-          f"+ {len(instances)} instances into {', '.join(written)}")
+          f"+ {len(maps)} maps into {', '.join(written)}")
 
 
 if __name__ == "__main__":
