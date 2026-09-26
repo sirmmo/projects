@@ -170,7 +170,7 @@ const PROJECTS = [
     "featured": ""
   },
   {
-    "name": "https://ingmmo.com/openai-maple/",
+    "name": "openai-maple",
     "domain": "https://ingmmo.com/openai-maple/",
     "ecosystem": "AI Demo Tech",
     "service": "openai-maple",
@@ -183,7 +183,7 @@ const PROJECTS = [
     "featured": ""
   },
   {
-    "name": "https://ingmmo.com/openai-MobileMoE/",
+    "name": "openai-MobileMoE",
     "domain": "https://ingmmo.com/openai-MobileMoE/",
     "ecosystem": "AI Demo Tech",
     "service": "openai-mobileMoE",
@@ -196,7 +196,7 @@ const PROJECTS = [
     "featured": ""
   },
   {
-    "name": "https://ingmmo.com/openai-supra/",
+    "name": "openai-supra",
     "domain": "https://ingmmo.com/openai-supra/",
     "ecosystem": "AI Demo Tech",
     "service": "openai-supra",
@@ -248,7 +248,20 @@ const PROJECTS = [
     "featured": ""
   },
   {
-    "name": "https://ingmmo.com/pg_i18n/",
+    "name": "OpenAPI Gateway",
+    "domain": "https://ingmmo.com/openapi-gateway/",
+    "ecosystem": "Demo tech",
+    "service": "openapi-gateway",
+    "be": "",
+    "fe": "GH Pages",
+    "others": "",
+    "description": "",
+    "forward": "",
+    "attention": "ok",
+    "featured": ""
+  },
+  {
+    "name": "pg_i18n",
     "domain": "https://ingmmo.com/pg_i18n/",
     "ecosystem": "Demo tech",
     "service": "pg_i18n",
@@ -638,7 +651,7 @@ const PROJECTS = [
     "featured": ""
   },
   {
-    "name": "https://chwazi.justplaybo.it",
+    "name": "JustPlayBo Chwazi",
     "domain": "https://chwazi.justplaybo.it",
     "ecosystem": "Justplay",
     "service": "JusplayBo Chwazi",
@@ -833,7 +846,7 @@ const PROJECTS = [
     "featured": ""
   },
   {
-    "name": "https://www.openhistorymap.org/cited-geojson/",
+    "name": "OHM Cited JSON",
     "domain": "https://www.openhistorymap.org/cited-geojson/",
     "ecosystem": "OpenHistoryMap",
     "service": "cited-geojson",
@@ -1127,7 +1140,7 @@ const SERVICES = [
     "subtype": "",
     "package": "",
     "ecosystem": "HoloDocker",
-    "uses": "",
+    "uses": "openapi-gateway",
     "repo": "https://github.com/HoloDocker",
     "description": ""
   },
@@ -1587,7 +1600,7 @@ const SERVICES = [
     "subtype": "",
     "package": "",
     "ecosystem": "HGTFS",
-    "uses": "",
+    "uses": "hgtfs",
     "repo": "",
     "description": ""
   },
@@ -2044,7 +2057,7 @@ const SERVICES = [
   {
     "name": "cited-geojson",
     "type": "Webfront",
-    "subtype": "",
+    "subtype": "gh page",
     "package": "",
     "ecosystem": "OpenHistoryMap",
     "uses": "OntoRAG",
@@ -2054,9 +2067,19 @@ const SERVICES = [
   {
     "name": "JusplayBo Chwazi",
     "type": "Webfront",
-    "subtype": "gh page",
+    "subtype": "netlify",
     "package": "",
     "ecosystem": "Justplay",
+    "uses": "",
+    "repo": "",
+    "description": ""
+  },
+  {
+    "name": "openapi-gateway",
+    "type": "Docker",
+    "subtype": "gh page, docker",
+    "package": "",
+    "ecosystem": "Demo tech",
     "uses": "",
     "repo": "",
     "description": ""
